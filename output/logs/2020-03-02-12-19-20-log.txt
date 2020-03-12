@@ -1,0 +1,1 @@
+2020-03-02 12:19:57,247 root getlogging.py getlogging get_logging (line:34):[INFO] 测试开始！

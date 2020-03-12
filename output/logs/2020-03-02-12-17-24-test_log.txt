@@ -1,0 +1,18 @@
+{"pytest_version": "5.2.0", "$report_type": "SessionStart"}
+{"nodeid": "", "outcome": "passed", "longrepr": null, "result": null, "sections": [], "_report_type": "CollectReport"}
+{"nodeid": "__init__.py", "outcome": "passed", "longrepr": null, "result": null, "sections": [], "_report_type": "CollectReport"}
+{"nodeid": "Common/__init__.py", "outcome": "passed", "longrepr": null, "result": null, "sections": [], "_report_type": "CollectReport"}
+{"nodeid": "PageLocators/__init__.py", "outcome": "passed", "longrepr": null, "result": null, "sections": [], "_report_type": "CollectReport"}
+{"nodeid": "PageObjects/__init__.py", "outcome": "passed", "longrepr": null, "result": null, "sections": [], "_report_type": "CollectReport"}
+{"nodeid": "TestCases/test_invest.py::TestInvest", "outcome": "passed", "longrepr": null, "result": null, "sections": [], "_report_type": "CollectReport"}
+{"nodeid": "TestCases/test_invest.py::TestInvest", "outcome": "passed", "longrepr": null, "result": null, "sections": [], "_report_type": "CollectReport"}
+{"nodeid": "TestCases/test_invest.py", "outcome": "passed", "longrepr": null, "result": null, "sections": [], "_report_type": "CollectReport"}
+{"nodeid": "TestCases/test_login.py::TestLogin", "outcome": "passed", "longrepr": null, "result": null, "sections": [], "_report_type": "CollectReport"}
+{"nodeid": "TestCases/test_login.py", "outcome": "passed", "longrepr": null, "result": null, "sections": [], "_report_type": "CollectReport"}
+{"nodeid": "TestCases/test_login_new.py::TestLogin", "outcome": "passed", "longrepr": null, "result": null, "sections": [], "_report_type": "CollectReport"}
+{"nodeid": "TestCases/test_login_new.py::TestLogin", "outcome": "passed", "longrepr": null, "result": null, "sections": [], "_report_type": "CollectReport"}
+{"nodeid": "TestCases/test_login_new.py", "outcome": "passed", "longrepr": null, "result": null, "sections": [], "_report_type": "CollectReport"}
+{"nodeid": "TestCases/__init__.py", "outcome": "passed", "longrepr": null, "result": null, "sections": [], "_report_type": "CollectReport"}
+{"nodeid": "TestDatas/test_yaml.py", "outcome": "passed", "longrepr": null, "result": null, "sections": [], "_report_type": "CollectReport"}
+{"nodeid": "TestDatas/__init__.py", "outcome": "passed", "longrepr": null, "result": null, "sections": [], "_report_type": "CollectReport"}
+{"nodeid": "TestCases/test_login_new.py::TestLogin::test_login_3_success", "location": ["TestCases\\test_login_new.py", 53, "TestLogin.test_login_3_success"], "keywords": {"()": 1, "TestLogin": 1, "WebFramework": 1, "test1": 1, "TestCases/__init__.py": 1, "run": 1, "test": 1, "test_login_3_success": 1, "test_login_new.py": 1, "usefixtures": 1, "pytestmark": 1}, "outcome": "passed", "longrepr": null, "when": "setup", "user_properties": [], "sections": [["Captured log setup", "\u001b[32mINFO    \u001b[0m root:getlogging.py:34 \u6d4b\u8bd5\u5f00\u59cb\uff01"]], "duration": 101.55198621749878, "_report_type": "TestReport"}

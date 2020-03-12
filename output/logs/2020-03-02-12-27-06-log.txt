@@ -1,0 +1,6 @@
+2020-03-02 12:27:50,171 root getlogging.py getlogging get_logging (line:34):[INFO] 测试开始！
+2020-03-02 12:28:01,514 root getlogging.py getlogging get_logging (line:34):[INFO] 测试成功的用例！
+2020-03-02 12:28:37,675 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能:输入文本内容13760246701
+2020-03-02 12:28:39,877 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能,查找元素('xpath', "//input[@name='phone']")
+2020-03-02 12:28:39,881 root getlogging.py getlogging get_logging (line:38):[ERROR] 登录页面-登录功能:等待元素('xpath', "//input[@name='phone']")失败,msg:'GetLogging' object has no attribute 'find_element'
+2020-03-02 12:28:39,884 root getlogging.py getlogging get_logging (line:38):[ERROR] 截图失败，'GetLogging' object has no attribute 'save_screenshot'

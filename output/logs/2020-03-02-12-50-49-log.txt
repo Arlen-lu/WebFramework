@@ -1,0 +1,191 @@
+2020-03-02 12:51:01,622 root getlogging.py getlogging get_logging (line:34):[INFO] 测试开始！
+2020-03-02 12:51:01,624 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能:输入文本内容
+2020-03-02 12:51:01,625 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能,查找元素('xpath', "//input[@name='phone']")
+2020-03-02 12:51:01,648 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能:元素('xpath', "//input[@name='phone']")已出现，等待时长0.022939682006835938s
+2020-03-02 12:51:01,733 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能：在元素('xpath', "//input[@name='phone']")输入
+2020-03-02 12:51:01,735 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能:输入文本内容python
+2020-03-02 12:51:01,736 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能,查找元素('xpath', "//input[@name='password']")
+2020-03-02 12:51:01,769 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能:元素('xpath', "//input[@name='password']")已出现，等待时长0.03191494941711426s
+2020-03-02 12:51:01,846 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能：在元素('xpath', "//input[@name='password']")输入python
+2020-03-02 12:51:01,847 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能,查找元素('class name', 'btn-special')
+2020-03-02 12:51:01,880 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能:元素('class name', 'btn-special')已出现，等待时长0.028922557830810547s
+2020-03-02 12:51:01,945 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能：点击('class name', 'btn-special')按键
+2020-03-02 12:51:01,946 root getlogging.py getlogging get_logging (line:34):[INFO] 获取文本内容
+2020-03-02 12:51:01,947 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登陆区域错误信息,查找元素('class name', 'form-error-info')
+2020-03-02 12:51:01,981 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登陆区域错误信息:元素('class name', 'form-error-info')已出现，等待时长0.03191494941711426s
+2020-03-02 12:51:02,004 root getlogging.py getlogging get_logging (line:34):[INFO] Test Pass!
+2020-03-02 12:51:02,267 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能:输入文本内容18684720553
+2020-03-02 12:51:02,267 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能,查找元素('xpath', "//input[@name='phone']")
+2020-03-02 12:51:02,285 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能:元素('xpath', "//input[@name='phone']")已出现，等待时长0.016955137252807617s
+2020-03-02 12:51:02,403 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能：在元素('xpath', "//input[@name='phone']")输入18684720553
+2020-03-02 12:51:02,404 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能:输入文本内容
+2020-03-02 12:51:02,405 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能,查找元素('xpath', "//input[@name='password']")
+2020-03-02 12:51:02,434 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能:元素('xpath', "//input[@name='password']")已出现，等待时长0.02892303466796875s
+2020-03-02 12:51:02,489 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能：在元素('xpath', "//input[@name='password']")输入
+2020-03-02 12:51:02,490 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能,查找元素('class name', 'btn-special')
+2020-03-02 12:51:02,513 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能:元素('class name', 'btn-special')已出现，等待时长0.018949031829833984s
+2020-03-02 12:51:02,572 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能：点击('class name', 'btn-special')按键
+2020-03-02 12:51:02,573 root getlogging.py getlogging get_logging (line:34):[INFO] 获取文本内容
+2020-03-02 12:51:02,573 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登陆区域错误信息,查找元素('class name', 'form-error-info')
+2020-03-02 12:51:02,648 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登陆区域错误信息:元素('class name', 'form-error-info')已出现，等待时长0.07180666923522949s
+2020-03-02 12:51:02,764 root getlogging.py getlogging get_logging (line:34):[INFO] Test Pass!
+2020-03-02 12:51:03,083 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能:输入文本内容
+2020-03-02 12:51:03,083 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能,查找元素('xpath', "//input[@name='phone']")
+2020-03-02 12:51:03,100 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能:元素('xpath', "//input[@name='phone']")已出现，等待时长0.015956878662109375s
+2020-03-02 12:51:03,130 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能：在元素('xpath', "//input[@name='phone']")输入
+2020-03-02 12:51:03,131 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能:输入文本内容
+2020-03-02 12:51:03,132 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能,查找元素('xpath', "//input[@name='password']")
+2020-03-02 12:51:03,173 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能:元素('xpath', "//input[@name='password']")已出现，等待时长0.03889656066894531s
+2020-03-02 12:51:03,218 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能：在元素('xpath', "//input[@name='password']")输入
+2020-03-02 12:51:03,222 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能,查找元素('class name', 'btn-special')
+2020-03-02 12:51:03,245 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能:元素('class name', 'btn-special')已出现，等待时长0.022940635681152344s
+2020-03-02 12:51:03,371 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能：点击('class name', 'btn-special')按键
+2020-03-02 12:51:03,372 root getlogging.py getlogging get_logging (line:34):[INFO] 获取文本内容
+2020-03-02 12:51:03,375 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登陆区域错误信息,查找元素('class name', 'form-error-info')
+2020-03-02 12:51:03,402 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登陆区域错误信息:元素('class name', 'form-error-info')已出现，等待时长0.02393651008605957s
+2020-03-02 12:51:03,423 root getlogging.py getlogging get_logging (line:34):[INFO] Test Pass!
+2020-03-02 12:51:03,714 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能:输入文本内容186847
+2020-03-02 12:51:03,715 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能,查找元素('xpath', "//input[@name='phone']")
+2020-03-02 12:51:03,736 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能:元素('xpath', "//input[@name='phone']")已出现，等待时长0.019959211349487305s
+2020-03-02 12:51:03,824 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能：在元素('xpath', "//input[@name='phone']")输入186847
+2020-03-02 12:51:03,828 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能:输入文本内容python
+2020-03-02 12:51:03,829 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能,查找元素('xpath', "//input[@name='password']")
+2020-03-02 12:51:03,849 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能:元素('xpath', "//input[@name='password']")已出现，等待时长0.02094435691833496s
+2020-03-02 12:51:03,930 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能：在元素('xpath', "//input[@name='password']")输入python
+2020-03-02 12:51:03,931 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能,查找元素('class name', 'btn-special')
+2020-03-02 12:51:03,949 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能:元素('class name', 'btn-special')已出现，等待时长0.01795196533203125s
+2020-03-02 12:51:04,037 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能：点击('class name', 'btn-special')按键
+2020-03-02 12:51:04,039 root getlogging.py getlogging get_logging (line:34):[INFO] 获取文本内容
+2020-03-02 12:51:04,042 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登陆区域错误信息,查找元素('class name', 'form-error-info')
+2020-03-02 12:51:04,073 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登陆区域错误信息:元素('class name', 'form-error-info')已出现，等待时长0.026925086975097656s
+2020-03-02 12:51:04,096 root getlogging.py getlogging get_logging (line:34):[INFO] Test Pass!
+2020-03-02 12:51:04,320 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能:输入文本内容186847205531
+2020-03-02 12:51:04,321 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能,查找元素('xpath', "//input[@name='phone']")
+2020-03-02 12:51:04,344 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能:元素('xpath', "//input[@name='phone']")已出现，等待时长0.0219419002532959s
+2020-03-02 12:51:04,453 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能：在元素('xpath', "//input[@name='phone']")输入186847205531
+2020-03-02 12:51:04,454 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能:输入文本内容python
+2020-03-02 12:51:04,455 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能,查找元素('xpath', "//input[@name='password']")
+2020-03-02 12:51:04,471 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能:元素('xpath', "//input[@name='password']")已出现，等待时长0.015957355499267578s
+2020-03-02 12:51:04,572 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能：在元素('xpath', "//input[@name='password']")输入python
+2020-03-02 12:51:04,573 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能,查找元素('class name', 'btn-special')
+2020-03-02 12:51:04,599 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能:元素('class name', 'btn-special')已出现，等待时长0.02293872833251953s
+2020-03-02 12:51:04,685 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能：点击('class name', 'btn-special')按键
+2020-03-02 12:51:04,696 root getlogging.py getlogging get_logging (line:34):[INFO] 获取文本内容
+2020-03-02 12:51:04,698 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登陆区域错误信息,查找元素('class name', 'form-error-info')
+2020-03-02 12:51:04,728 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登陆区域错误信息:元素('class name', 'form-error-info')已出现，等待时长0.02892279624938965s
+2020-03-02 12:51:04,750 root getlogging.py getlogging get_logging (line:34):[INFO] Test Pass!
+2020-03-02 12:51:05,006 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能:输入文本内容17312783975
+2020-03-02 12:51:05,006 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能,查找元素('xpath', "//input[@name='phone']")
+2020-03-02 12:51:05,028 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能:元素('xpath', "//input[@name='phone']")已出现，等待时长0.019945621490478516s
+2020-03-02 12:51:05,135 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能：在元素('xpath', "//input[@name='phone']")输入17312783975
+2020-03-02 12:51:05,136 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能:输入文本内容python
+2020-03-02 12:51:05,137 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能,查找元素('xpath', "//input[@name='password']")
+2020-03-02 12:51:05,154 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能:元素('xpath', "//input[@name='password']")已出现，等待时长0.015957117080688477s
+2020-03-02 12:51:05,220 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能：在元素('xpath', "//input[@name='password']")输入python
+2020-03-02 12:51:05,221 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能,查找元素('class name', 'btn-special')
+2020-03-02 12:51:05,246 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能:元素('class name', 'btn-special')已出现，等待时长0.024933576583862305s
+2020-03-02 12:51:05,309 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能：点击('class name', 'btn-special')按键
+2020-03-02 12:51:05,313 root getlogging.py getlogging get_logging (line:34):[INFO] 获取文本内容
+2020-03-02 12:51:05,314 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-获取页面正中间错误信息,查找元素('class name', 'layui-layer-content')
+2020-03-02 12:51:05,844 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-获取页面正中间错误信息:元素('class name', 'layui-layer-content')已出现，等待时长0.5295274257659912s
+2020-03-02 12:51:05,864 root getlogging.py getlogging get_logging (line:34):[INFO] Test Pass!
+2020-03-02 12:51:06,111 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能:输入文本内容13760246701
+2020-03-02 12:51:06,112 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能,查找元素('xpath', "//input[@name='phone']")
+2020-03-02 12:51:06,132 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能:元素('xpath', "//input[@name='phone']")已出现，等待时长0.018948793411254883s
+2020-03-02 12:51:06,246 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能：在元素('xpath', "//input[@name='phone']")输入13760246701
+2020-03-02 12:51:06,247 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能:输入文本内容pppp
+2020-03-02 12:51:06,249 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能,查找元素('xpath', "//input[@name='password']")
+2020-03-02 12:51:06,265 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能:元素('xpath', "//input[@name='password']")已出现，等待时长0.014957666397094727s
+2020-03-02 12:51:06,324 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能：在元素('xpath', "//input[@name='password']")输入pppp
+2020-03-02 12:51:06,329 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能,查找元素('class name', 'btn-special')
+2020-03-02 12:51:06,349 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能:元素('class name', 'btn-special')已出现，等待时长0.019945859909057617s
+2020-03-02 12:51:06,417 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能：点击('class name', 'btn-special')按键
+2020-03-02 12:51:06,418 root getlogging.py getlogging get_logging (line:34):[INFO] 获取文本内容
+2020-03-02 12:51:06,419 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-获取页面正中间错误信息,查找元素('class name', 'layui-layer-content')
+2020-03-02 12:51:06,964 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-获取页面正中间错误信息:元素('class name', 'layui-layer-content')已出现，等待时长0.544353723526001s
+2020-03-02 12:51:06,994 root getlogging.py getlogging get_logging (line:34):[INFO] Test Pass!
+2020-03-02 12:51:07,245 root getlogging.py getlogging get_logging (line:34):[INFO] 测试成功的用例！
+2020-03-02 12:51:07,246 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能:输入文本内容13760246701
+2020-03-02 12:51:07,246 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能,查找元素('xpath', "//input[@name='phone']")
+2020-03-02 12:51:07,265 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能:元素('xpath', "//input[@name='phone']")已出现，等待时长0.01795339584350586s
+2020-03-02 12:51:07,372 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能：在元素('xpath', "//input[@name='phone']")输入13760246701
+2020-03-02 12:51:07,372 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能:输入文本内容python
+2020-03-02 12:51:07,373 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能,查找元素('xpath', "//input[@name='password']")
+2020-03-02 12:51:07,393 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能:元素('xpath', "//input[@name='password']")已出现，等待时长0.017952680587768555s
+2020-03-02 12:51:07,462 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能：在元素('xpath', "//input[@name='password']")输入python
+2020-03-02 12:51:07,463 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能,查找元素('class name', 'btn-special')
+2020-03-02 12:51:07,483 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能:元素('class name', 'btn-special')已出现，等待时长0.01795220375061035s
+2020-03-02 12:51:07,540 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能：点击('class name', 'btn-special')按键
+2020-03-02 12:51:07,546 root getlogging.py getlogging get_logging (line:34):[INFO] 获取文本内容
+2020-03-02 12:51:07,547 root getlogging.py getlogging get_logging (line:34):[INFO] 投标功能-获取账号名称,查找元素('xpath', "//a[@href = '/Member/index.html']")
+2020-03-02 12:51:31,203 root getlogging.py getlogging get_logging (line:34):[INFO] 投标功能-获取账号名称:元素('xpath', "//a[@href = '/Member/index.html']")已出现，等待时长23.653963565826416s
+2020-03-02 12:51:31,226 root getlogging.py getlogging get_logging (line:34):[INFO] Test Pass!
+2020-03-02 12:51:53,488 root getlogging.py getlogging get_logging (line:34):[INFO] 投标功能-获取投标按钮,查找元素集合('xpath', "//div[@class='b-unit']//a[@class ='btn btn-special']")
+2020-03-02 12:52:17,443 root getlogging.py getlogging get_logging (line:34):[INFO] 投标功能:输入投标金额:输入文本内容15
+2020-03-02 12:52:17,446 root getlogging.py getlogging get_logging (line:34):[INFO] 投标功能:输入投标金额,查找元素('xpath', "//input[contains(@class,'invest-unit-investinput')]")
+2020-03-02 12:52:17,489 root getlogging.py getlogging get_logging (line:34):[INFO] 投标功能:输入投标金额:元素('xpath', "//input[contains(@class,'invest-unit-investinput')]")已出现，等待时长0.03989291191101074s
+2020-03-02 12:52:17,541 root getlogging.py getlogging get_logging (line:34):[INFO] 投标功能:输入投标金额：在元素('xpath', "//input[contains(@class,'invest-unit-investinput')]")输入15
+2020-03-02 12:52:19,542 root getlogging.py getlogging get_logging (line:34):[INFO] 获取文本内容
+2020-03-02 12:52:19,546 root getlogging.py getlogging get_logging (line:34):[INFO] 投标功能:点击投标,查找元素('xpath', "//button[contains(@class,'btn-special')]")
+2020-03-02 12:52:19,580 root getlogging.py getlogging get_logging (line:34):[INFO] 投标功能:点击投标:元素('xpath', "//button[contains(@class,'btn-special')]")已出现，等待时长0.030915021896362305s
+2020-03-02 12:52:19,604 root getlogging.py getlogging get_logging (line:34):[INFO] Test Pass！
+2020-03-02 12:52:19,619 root getlogging.py getlogging get_logging (line:34):[INFO] 投标功能:输入投标金额:输入文本内容0
+2020-03-02 12:52:19,620 root getlogging.py getlogging get_logging (line:34):[INFO] 投标功能:输入投标金额,查找元素('xpath', "//input[contains(@class,'invest-unit-investinput')]")
+2020-03-02 12:52:43,209 root getlogging.py getlogging get_logging (line:34):[INFO] 投标功能:输入投标金额:元素('xpath', "//input[contains(@class,'invest-unit-investinput')]")已出现，等待时长23.58717441558838s
+2020-03-02 12:52:43,255 root getlogging.py getlogging get_logging (line:34):[INFO] 投标功能:输入投标金额：在元素('xpath', "//input[contains(@class,'invest-unit-investinput')]")输入0
+2020-03-02 12:52:43,256 root getlogging.py getlogging get_logging (line:34):[INFO] 投标功能:点击投标,查找元素('xpath', "//button[contains(@class,'btn-special')]")
+2020-03-02 12:52:43,293 root getlogging.py getlogging get_logging (line:34):[INFO] 投标功能:点击投标:元素('xpath', "//button[contains(@class,'btn-special')]")已出现，等待时长0.03390860557556152s
+2020-03-02 12:52:43,354 root getlogging.py getlogging get_logging (line:34):[INFO] 投标功能:点击投标：点击('xpath', "//button[contains(@class,'btn-special')]")按键
+2020-03-02 12:52:43,355 root getlogging.py getlogging get_logging (line:34):[INFO] 获取文本内容
+2020-03-02 12:52:43,357 root getlogging.py getlogging get_logging (line:34):[INFO] 投标功能：弹出框错误提示,查找元素('xpath', "//div[contains(@class,'layui-layer-content')]/div[@class='text-center']")
+2020-03-02 12:52:43,905 root getlogging.py getlogging get_logging (line:34):[INFO] 投标功能：弹出框错误提示:元素('xpath', "//div[contains(@class,'layui-layer-content')]/div[@class='text-center']")已出现，等待时长0.546088695526123s
+2020-03-02 12:52:43,942 root getlogging.py getlogging get_logging (line:34):[INFO] Test Pass!
+2020-03-02 12:52:45,946 root getlogging.py getlogging get_logging (line:34):[INFO] 投标功能:确认弹出框错误提示,查找元素('xpath', "//div[@id='layui-layer1']//a[text()='确认']")
+2020-03-02 12:52:46,004 root getlogging.py getlogging get_logging (line:34):[INFO] 投标功能:确认弹出框错误提示:元素('xpath', "//div[@id='layui-layer1']//a[text()='确认']")已出现，等待时长0.054811716079711914s
+2020-03-02 12:52:46,069 root getlogging.py getlogging get_logging (line:34):[INFO] 投标功能:确认弹出框错误提示：点击('xpath', "//div[@id='layui-layer1']//a[text()='确认']")按键
+2020-03-02 12:53:09,501 root getlogging.py getlogging get_logging (line:34):[INFO] 投标功能:输入投标金额:输入文本内容110
+2020-03-02 12:53:09,503 root getlogging.py getlogging get_logging (line:34):[INFO] 投标功能:输入投标金额,查找元素('xpath', "//input[contains(@class,'invest-unit-investinput')]")
+2020-03-02 12:53:09,543 root getlogging.py getlogging get_logging (line:34):[INFO] 投标功能:输入投标金额:元素('xpath', "//input[contains(@class,'invest-unit-investinput')]")已出现，等待时长0.03789782524108887s
+2020-03-02 12:53:09,604 root getlogging.py getlogging get_logging (line:34):[INFO] 投标功能:输入投标金额：在元素('xpath', "//input[contains(@class,'invest-unit-investinput')]")输入110
+2020-03-02 12:53:09,605 root getlogging.py getlogging get_logging (line:34):[INFO] 投标功能:点击投标,查找元素('xpath', "//button[contains(@class,'btn-special')]")
+2020-03-02 12:53:09,634 root getlogging.py getlogging get_logging (line:34):[INFO] 投标功能:点击投标:元素('xpath', "//button[contains(@class,'btn-special')]")已出现，等待时长0.026937007904052734s
+2020-03-02 12:53:09,691 root getlogging.py getlogging get_logging (line:34):[INFO] 投标功能:点击投标：点击('xpath', "//button[contains(@class,'btn-special')]")按键
+2020-03-02 12:53:09,692 root getlogging.py getlogging get_logging (line:34):[INFO] 获取文本内容
+2020-03-02 12:53:09,693 root getlogging.py getlogging get_logging (line:34):[INFO] 投标功能：弹出框错误提示,查找元素('xpath', "//div[contains(@class,'layui-layer-content')]/div[@class='text-center']")
+2020-03-02 12:53:10,253 root getlogging.py getlogging get_logging (line:34):[INFO] 投标功能：弹出框错误提示:元素('xpath', "//div[contains(@class,'layui-layer-content')]/div[@class='text-center']")已出现，等待时长0.5587680339813232s
+2020-03-02 12:53:10,290 root getlogging.py getlogging get_logging (line:34):[INFO] Test Pass!
+2020-03-02 12:53:12,291 root getlogging.py getlogging get_logging (line:34):[INFO] 投标功能:确认弹出框错误提示,查找元素('xpath', "//div[@id='layui-layer1']//a[text()='确认']")
+2020-03-02 12:53:12,357 root getlogging.py getlogging get_logging (line:34):[INFO] 投标功能:确认弹出框错误提示:元素('xpath', "//div[@id='layui-layer1']//a[text()='确认']")已出现，等待时长0.06382608413696289s
+2020-03-02 12:53:12,421 root getlogging.py getlogging get_logging (line:34):[INFO] 投标功能:确认弹出框错误提示：点击('xpath', "//div[@id='layui-layer1']//a[text()='确认']")按键
+2020-03-02 12:53:35,891 root getlogging.py getlogging get_logging (line:34):[INFO] 投标功能:输入投标金额:输入文本内容999999999999990
+2020-03-02 12:53:35,892 root getlogging.py getlogging get_logging (line:34):[INFO] 投标功能:输入投标金额,查找元素('xpath', "//input[contains(@class,'invest-unit-investinput')]")
+2020-03-02 12:53:35,923 root getlogging.py getlogging get_logging (line:34):[INFO] 投标功能:输入投标金额:元素('xpath', "//input[contains(@class,'invest-unit-investinput')]")已出现，等待时长0.028923749923706055s
+2020-03-02 12:53:36,041 root getlogging.py getlogging get_logging (line:34):[INFO] 投标功能:输入投标金额：在元素('xpath', "//input[contains(@class,'invest-unit-investinput')]")输入999999999999990
+2020-03-02 12:53:36,042 root getlogging.py getlogging get_logging (line:34):[INFO] 投标功能:点击投标,查找元素('xpath', "//button[contains(@class,'btn-special')]")
+2020-03-02 12:53:36,067 root getlogging.py getlogging get_logging (line:34):[INFO] 投标功能:点击投标:元素('xpath', "//button[contains(@class,'btn-special')]")已出现，等待时长0.022939682006835938s
+2020-03-02 12:53:36,121 root getlogging.py getlogging get_logging (line:34):[INFO] 投标功能:点击投标：点击('xpath', "//button[contains(@class,'btn-special')]")按键
+2020-03-02 12:53:36,122 root getlogging.py getlogging get_logging (line:34):[INFO] 获取文本内容
+2020-03-02 12:53:36,123 root getlogging.py getlogging get_logging (line:34):[INFO] 投标功能：弹出框错误提示,查找元素('xpath', "//div[contains(@class,'layui-layer-content')]/div[@class='text-center']")
+2020-03-02 12:53:36,670 root getlogging.py getlogging get_logging (line:34):[INFO] 投标功能：弹出框错误提示:元素('xpath', "//div[contains(@class,'layui-layer-content')]/div[@class='text-center']")已出现，等待时长0.5457673072814941s
+2020-03-02 12:53:36,708 root getlogging.py getlogging get_logging (line:34):[INFO] Test Pass!
+2020-03-02 12:53:38,710 root getlogging.py getlogging get_logging (line:34):[INFO] 投标功能:确认弹出框错误提示,查找元素('xpath', "//div[@id='layui-layer1']//a[text()='确认']")
+2020-03-02 12:53:38,735 root getlogging.py getlogging get_logging (line:34):[INFO] 投标功能:确认弹出框错误提示:元素('xpath', "//div[@id='layui-layer1']//a[text()='确认']")已出现，等待时长0.022938013076782227s
+2020-03-02 12:53:38,789 root getlogging.py getlogging get_logging (line:34):[INFO] 投标功能:确认弹出框错误提示：点击('xpath', "//div[@id='layui-layer1']//a[text()='确认']")按键
+2020-03-02 12:54:02,264 root getlogging.py getlogging get_logging (line:34):[INFO] 获取element属性值
+2020-03-02 12:54:02,265 root getlogging.py getlogging get_logging (line:34):[INFO] 投标功能：账户剩余金额,查找元素('xpath', "//input[contains(@class,'invest-unit-investinput')]")
+2020-03-02 12:54:02,300 root getlogging.py getlogging get_logging (line:34):[INFO] 投标功能：账户剩余金额:元素('xpath', "//input[contains(@class,'invest-unit-investinput')]")已出现，等待时长0.0328826904296875s
+2020-03-02 12:54:02,316 root getlogging.py getlogging get_logging (line:34):[INFO] 投标功能：账户剩余金额成功获取到('xpath', "//input[contains(@class,'invest-unit-investinput')]")的data-amount属性值为1237030.46
+2020-03-02 12:54:02,317 root getlogging.py getlogging get_logging (line:34):[INFO] 投标功能:输入投标金额:输入文本内容1000
+2020-03-02 12:54:02,318 root getlogging.py getlogging get_logging (line:34):[INFO] 投标功能:输入投标金额,查找元素('xpath', "//input[contains(@class,'invest-unit-investinput')]")
+2020-03-02 12:54:02,338 root getlogging.py getlogging get_logging (line:34):[INFO] 投标功能:输入投标金额:元素('xpath', "//input[contains(@class,'invest-unit-investinput')]")已出现，等待时长0.01795220375061035s
+2020-03-02 12:54:02,392 root getlogging.py getlogging get_logging (line:34):[INFO] 投标功能:输入投标金额：在元素('xpath', "//input[contains(@class,'invest-unit-investinput')]")输入1000
+2020-03-02 12:54:02,393 root getlogging.py getlogging get_logging (line:34):[INFO] 投标功能:点击投标,查找元素('xpath', "//button[contains(@class,'btn-special')]")
+2020-03-02 12:54:02,419 root getlogging.py getlogging get_logging (line:34):[INFO] 投标功能:点击投标:元素('xpath', "//button[contains(@class,'btn-special')]")已出现，等待时长0.024933338165283203s
+2020-03-02 12:54:02,473 root getlogging.py getlogging get_logging (line:34):[INFO] 投标功能:点击投标：点击('xpath', "//button[contains(@class,'btn-special')]")按键
+2020-03-02 12:54:02,474 root getlogging.py getlogging get_logging (line:34):[INFO] 获取文本内容
+2020-03-02 12:54:02,475 root getlogging.py getlogging get_logging (line:34):[INFO] 投标功能：投标成功,查找元素('xpath', "//div[@class='layui-layer-content']//div[text()='投标成功！']")
+2020-03-02 12:54:03,042 root getlogging.py getlogging get_logging (line:34):[INFO] 投标功能：投标成功:元素('xpath', "//div[@class='layui-layer-content']//div[text()='投标成功！']")已出现，等待时长0.5645599365234375s
+2020-03-02 12:54:05,075 root getlogging.py getlogging get_logging (line:34):[INFO] 投标功能：查看并激活按钮,查找元素('xpath', "//div[@class='layui-layer-content']//button[text()='查看并激活']")
+2020-03-02 12:54:05,144 root getlogging.py getlogging get_logging (line:34):[INFO] 投标功能：查看并激活按钮:元素('xpath', "//div[@class='layui-layer-content']//button[text()='查看并激活']")已出现，等待时长0.0657954216003418s
+2020-03-02 12:54:28,005 root getlogging.py getlogging get_logging (line:34):[INFO] 投标功能：查看并激活按钮：点击('xpath', "//div[@class='layui-layer-content']//button[text()='查看并激活']")按键
+2020-03-02 12:54:28,007 root getlogging.py getlogging get_logging (line:38):[ERROR] Test Fail!,msg:'NoneType' object has no attribute 'get_logging'

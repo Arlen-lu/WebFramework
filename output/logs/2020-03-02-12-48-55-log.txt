@@ -1,0 +1,17 @@
+2020-03-02 12:49:03,211 root getlogging.py getlogging get_logging (line:34):[INFO] 测试开始！
+2020-03-02 12:49:03,213 root getlogging.py getlogging get_logging (line:34):[INFO] 测试成功的用例！
+2020-03-02 12:49:03,214 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能:输入文本内容13760246701
+2020-03-02 12:49:03,215 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能,查找元素('xpath', "//input[@name='phone']")
+2020-03-02 12:49:03,241 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能:元素('xpath', "//input[@name='phone']")已出现，等待时长0.025931119918823242s
+2020-03-02 12:49:03,379 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能：在元素('xpath', "//input[@name='phone']")输入13760246701
+2020-03-02 12:49:03,380 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能:输入文本内容python
+2020-03-02 12:49:03,381 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能,查找元素('xpath', "//input[@name='password']")
+2020-03-02 12:49:03,403 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能:元素('xpath', "//input[@name='password']")已出现，等待时长0.021940231323242188s
+2020-03-02 12:49:03,470 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能：在元素('xpath', "//input[@name='password']")输入python
+2020-03-02 12:49:03,475 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能,查找元素('class name', 'btn-special')
+2020-03-02 12:49:03,499 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能:元素('class name', 'btn-special')已出现，等待时长0.020944595336914062s
+2020-03-02 12:49:03,552 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能：点击('class name', 'btn-special')按键
+2020-03-02 12:49:03,555 root getlogging.py getlogging get_logging (line:34):[INFO] 获取文本内容
+2020-03-02 12:49:03,557 root getlogging.py getlogging get_logging (line:34):[INFO] 投标功能-获取账号名称,查找元素('xpath', "//a[@href = '/Member/index.html']")
+2020-03-02 12:49:25,491 root getlogging.py getlogging get_logging (line:34):[INFO] 投标功能-获取账号名称:元素('xpath', "//a[@href = '/Member/index.html']")已出现，等待时长21.93216371536255s
+2020-03-02 12:49:25,513 root getlogging.py getlogging get_logging (line:34):[INFO] Test Pass!

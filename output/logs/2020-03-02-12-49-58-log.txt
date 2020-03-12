@@ -1,0 +1,26 @@
+2020-03-02 12:50:06,702 root getlogging.py getlogging get_logging (line:34):[INFO] 测试开始！
+2020-03-02 12:50:06,704 root getlogging.py getlogging get_logging (line:34):[INFO] 测试成功的用例！
+2020-03-02 12:50:06,705 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能:输入文本内容13760246701
+2020-03-02 12:50:06,706 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能,查找元素('xpath', "//input[@name='phone']")
+2020-03-02 12:50:06,733 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能:元素('xpath', "//input[@name='phone']")已出现，等待时长0.02592945098876953s
+2020-03-02 12:50:06,865 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能：在元素('xpath', "//input[@name='phone']")输入13760246701
+2020-03-02 12:50:06,866 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能:输入文本内容python
+2020-03-02 12:50:06,867 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能,查找元素('xpath', "//input[@name='password']")
+2020-03-02 12:50:06,895 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能:元素('xpath', "//input[@name='password']")已出现，等待时长0.027935266494750977s
+2020-03-02 12:50:06,970 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能：在元素('xpath', "//input[@name='password']")输入python
+2020-03-02 12:50:06,970 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能,查找元素('class name', 'btn-special')
+2020-03-02 12:50:06,995 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能:元素('class name', 'btn-special')已出现，等待时长0.023936748504638672s
+2020-03-02 12:50:07,048 root getlogging.py getlogging get_logging (line:34):[INFO] 登录页面-登录功能：点击('class name', 'btn-special')按键
+2020-03-02 12:50:07,049 root getlogging.py getlogging get_logging (line:34):[INFO] 获取文本内容
+2020-03-02 12:50:07,049 root getlogging.py getlogging get_logging (line:34):[INFO] 投标功能-获取账号名称,查找元素('xpath', "//a[@href = '/Member/index.html']")
+2020-03-02 12:50:08,913 root getlogging.py getlogging get_logging (line:38):[ERROR] 投标功能-获取账号名称:等待元素('xpath', "//a[@href = '/Member/index.html']")失败,msg:'NoneType' object has no attribute 'is_displayed'
+2020-03-02 12:50:08,919 root getlogging.py getlogging get_logging (line:38):[ERROR] 截图失败，Message: no such window: target window already closed
+from unknown error: web view not found
+  (Session info: chrome=77.0.3865.90)
+  (Driver info: chromedriver=2.37.544315 (730aa6a5fdba159ac9f4c1e8cbc59bf1b5ce12b7),platform=Windows NT 10.0.17763 x86_64)
+
+2020-03-02 12:50:08,925 root getlogging.py getlogging get_logging (line:34):[INFO] Test Fail!,msg:Message: no such window: target window already closed
+from unknown error: web view not found
+  (Session info: chrome=77.0.3865.90)
+  (Driver info: chromedriver=2.37.544315 (730aa6a5fdba159ac9f4c1e8cbc59bf1b5ce12b7),platform=Windows NT 10.0.17763 x86_64)
+

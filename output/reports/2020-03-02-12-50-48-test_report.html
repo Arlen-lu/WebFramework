@@ -1,0 +1,1222 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <title>Test Report</title>
+    <link href="assets/style.css" rel="stylesheet" type="text/css"/></head>
+  <body onLoad="init()">
+    <script>/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+
+function toArray(iter) {
+    if (iter === null) {
+        return null;
+    }
+    return Array.prototype.slice.call(iter);
+}
+
+function find(selector, elem) {
+    if (!elem) {
+        elem = document;
+    }
+    return elem.querySelector(selector);
+}
+
+function find_all(selector, elem) {
+    if (!elem) {
+        elem = document;
+    }
+    return toArray(elem.querySelectorAll(selector));
+}
+
+function sort_column(elem) {
+    toggle_sort_states(elem);
+    var colIndex = toArray(elem.parentNode.childNodes).indexOf(elem);
+    var key;
+    if (elem.classList.contains('numeric')) {
+        key = key_num;
+    } else if (elem.classList.contains('result')) {
+        key = key_result;
+    } else {
+        key = key_alpha;
+    }
+    sort_table(elem, key(colIndex));
+}
+
+function show_all_extras() {
+    find_all('.col-result').forEach(show_extras);
+}
+
+function hide_all_extras() {
+    find_all('.col-result').forEach(hide_extras);
+}
+
+function show_extras(colresult_elem) {
+    var extras = colresult_elem.parentNode.nextElementSibling;
+    var expandcollapse = colresult_elem.firstElementChild;
+    extras.classList.remove("collapsed");
+    expandcollapse.classList.remove("expander");
+    expandcollapse.classList.add("collapser");
+}
+
+function hide_extras(colresult_elem) {
+    var extras = colresult_elem.parentNode.nextElementSibling;
+    var expandcollapse = colresult_elem.firstElementChild;
+    extras.classList.add("collapsed");
+    expandcollapse.classList.remove("collapser");
+    expandcollapse.classList.add("expander");
+}
+
+function show_filters() {
+    var filter_items = document.getElementsByClassName('filter');
+    for (var i = 0; i < filter_items.length; i++)
+        filter_items[i].hidden = false;
+}
+
+function add_collapse() {
+    // Add links for show/hide all
+    var resulttable = find('table#results-table');
+    var showhideall = document.createElement("p");
+    showhideall.innerHTML = '<a href="javascript:show_all_extras()">Show all details</a> / ' +
+                            '<a href="javascript:hide_all_extras()">Hide all details</a>';
+    resulttable.parentElement.insertBefore(showhideall, resulttable);
+
+    // Add show/hide link to each result
+    find_all('.col-result').forEach(function(elem) {
+        var collapsed = get_query_parameter('collapsed') || 'Passed';
+        var extras = elem.parentNode.nextElementSibling;
+        var expandcollapse = document.createElement("span");
+        if (collapsed.includes(elem.innerHTML)) {
+            extras.classList.add("collapsed");
+            expandcollapse.classList.add("expander");
+        } else {
+            expandcollapse.classList.add("collapser");
+        }
+        elem.appendChild(expandcollapse);
+
+        elem.addEventListener("click", function(event) {
+            if (event.currentTarget.parentNode.nextElementSibling.classList.contains("collapsed")) {
+                show_extras(event.currentTarget);
+            } else {
+                hide_extras(event.currentTarget);
+            }
+        });
+    })
+}
+
+function get_query_parameter(name) {
+    var match = RegExp('[?&]' + name + '=([^&]*)').exec(window.location.search);
+    return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
+}
+
+function init () {
+    reset_sort_headers();
+
+    add_collapse();
+
+    show_filters();
+
+    sort_column(find('.initial-sort'));
+
+    find_all('.sortable').forEach(function(elem) {
+        elem.addEventListener("click",
+                              function(event) {
+                                  sort_column(elem);
+                              }, false)
+    });
+
+};
+
+function sort_table(clicked, key_func) {
+    var rows = find_all('.results-table-row');
+    var reversed = !clicked.classList.contains('asc');
+    var sorted_rows = sort(rows, key_func, reversed);
+    /* Whole table is removed here because browsers acts much slower
+     * when appending existing elements.
+     */
+    var thead = document.getElementById("results-table-head");
+    document.getElementById('results-table').remove();
+    var parent = document.createElement("table");
+    parent.id = "results-table";
+    parent.appendChild(thead);
+    sorted_rows.forEach(function(elem) {
+        parent.appendChild(elem);
+    });
+    document.getElementsByTagName("BODY")[0].appendChild(parent);
+}
+
+function sort(items, key_func, reversed) {
+    var sort_array = items.map(function(item, i) {
+        return [key_func(item), i];
+    });
+
+    sort_array.sort(function(a, b) {
+        var key_a = a[0];
+        var key_b = b[0];
+
+        if (key_a == key_b) return 0;
+
+        if (reversed) {
+            return (key_a < key_b ? 1 : -1);
+        } else {
+            return (key_a > key_b ? 1 : -1);
+        }
+    });
+
+    return sort_array.map(function(item) {
+        var index = item[1];
+        return items[index];
+    });
+}
+
+function key_alpha(col_index) {
+    return function(elem) {
+        return elem.childNodes[1].childNodes[col_index].firstChild.data.toLowerCase();
+    };
+}
+
+function key_num(col_index) {
+    return function(elem) {
+        return parseFloat(elem.childNodes[1].childNodes[col_index].firstChild.data);
+    };
+}
+
+function key_result(col_index) {
+    return function(elem) {
+        var strings = ['Error', 'Failed', 'Rerun', 'XFailed', 'XPassed',
+                       'Skipped', 'Passed'];
+        return strings.indexOf(elem.childNodes[1].childNodes[col_index].firstChild.data);
+    };
+}
+
+function reset_sort_headers() {
+    find_all('.sort-icon').forEach(function(elem) {
+        elem.parentNode.removeChild(elem);
+    });
+    find_all('.sortable').forEach(function(elem) {
+        var icon = document.createElement("div");
+        icon.className = "sort-icon";
+        icon.textContent = "vvv";
+        elem.insertBefore(icon, elem.firstChild);
+        elem.classList.remove("desc", "active");
+        elem.classList.add("asc", "inactive");
+    });
+}
+
+function toggle_sort_states(elem) {
+    //if active, toggle between asc and desc
+    if (elem.classList.contains('active')) {
+        elem.classList.toggle('asc');
+        elem.classList.toggle('desc');
+    }
+
+    //if inactive, reset all other functions and add ascending active
+    if (elem.classList.contains('inactive')) {
+        reset_sort_headers();
+        elem.classList.remove('inactive');
+        elem.classList.add('active');
+    }
+}
+
+function is_all_rows_hidden(value) {
+  return value.hidden == false;
+}
+
+function filter_table(elem) {
+    var outcome_att = "data-test-result";
+    var outcome = elem.getAttribute(outcome_att);
+    class_outcome = outcome + " results-table-row";
+    var outcome_rows = document.getElementsByClassName(class_outcome);
+
+    for(var i = 0; i < outcome_rows.length; i++){
+        outcome_rows[i].hidden = !elem.checked;
+    }
+
+    var rows = find_all('.results-table-row').filter(is_all_rows_hidden);
+    var all_rows_hidden = rows.length == 0 ? true : false;
+    var not_found_message = document.getElementById("not-found-message");
+    not_found_message.hidden = !all_rows_hidden;
+}
+</script>
+    <h1>2020-03-02-12-50-48-test_report.html</h1>
+    <p>Report generated on 02-Mar-2020 at 12:54:55 by <a href="https://pypi.python.org/pypi/pytest-html">pytest-html</a> v2.0.1</p>
+    <h2>Environment</h2>
+    <table id="environment">
+      <tr>
+        <td>JAVA_HOME</td>
+        <td>D:\Program Files (x86)\Java\jdk1.8.0_161</td></tr>
+      <tr>
+        <td>Packages</td>
+        <td>{&apos;pytest&apos;: &apos;5.2.0&apos;, &apos;py&apos;: &apos;1.8.1&apos;, &apos;pluggy&apos;: &apos;0.13.1&apos;}</td></tr>
+      <tr>
+        <td>Platform</td>
+        <td>Windows-10-10.0.17763-SP0</td></tr>
+      <tr>
+        <td>Plugins</td>
+        <td>{&apos;allure-pytest&apos;: &apos;2.8.10&apos;, &apos;html&apos;: &apos;2.0.1&apos;, &apos;metadata&apos;: &apos;1.8.0&apos;, &apos;ordering&apos;: &apos;0.6&apos;, &apos;reportlog&apos;: &apos;0.1.0&apos;, &apos;rerunfailures&apos;: &apos;8.0&apos;}</td></tr>
+      <tr>
+        <td>Python</td>
+        <td>3.9.0a3</td></tr></table>
+    <h2>Summary</h2>
+    <p>13 tests ran in 246.84 seconds. </p>
+    <p class="filter" hidden="true">(Un)check the boxes to filter the results.</p><input checked="true" class="filter" data-test-result="passed" hidden="true" name="filter_checkbox" onChange="filter_table(this)" type="checkbox"/><span class="passed">12 passed</span>, <input checked="true" class="filter" data-test-result="skipped" disabled="true" hidden="true" name="filter_checkbox" onChange="filter_table(this)" type="checkbox"/><span class="skipped">0 skipped</span>, <input checked="true" class="filter" data-test-result="failed" hidden="true" name="filter_checkbox" onChange="filter_table(this)" type="checkbox"/><span class="failed">1 failed</span>, <input checked="true" class="filter" data-test-result="error" disabled="true" hidden="true" name="filter_checkbox" onChange="filter_table(this)" type="checkbox"/><span class="error">0 errors</span>, <input checked="true" class="filter" data-test-result="xfailed" disabled="true" hidden="true" name="filter_checkbox" onChange="filter_table(this)" type="checkbox"/><span class="xfailed">0 expected failures</span>, <input checked="true" class="filter" data-test-result="xpassed" disabled="true" hidden="true" name="filter_checkbox" onChange="filter_table(this)" type="checkbox"/><span class="xpassed">0 unexpected passes</span>, <input checked="true" class="filter" data-test-result="rerun" disabled="true" hidden="true" name="filter_checkbox" onChange="filter_table(this)" type="checkbox"/><span class="rerun">0 rerun</span>
+    <h2>Results</h2>
+    <table id="results-table">
+      <thead id="results-table-head">
+        <tr>
+          <th class="sortable result initial-sort" col="result">Result</th>
+          <th class="sortable" col="name">Test</th>
+          <th class="sortable numeric" col="duration">Duration</th>
+          <th>Links</th></tr>
+        <tr hidden="true" id="not-found-message">
+          <th colspan="4">No results found. Try to check the filters</th></tr></thead>
+      <tbody class="failed results-table-row">
+        <tr>
+          <td class="col-result">Failed</td>
+          <td class="col-name">TestCases/test_invest.py::TestInvest::test_invest[test_data0]</td>
+          <td class="col-duration">25.75</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log">self = &lt;WebFramework.TestCases.test_invest.TestInvest object at 0x000001AE5607ED30&gt;<br/>init_module = [&lt;selenium.webdriver.chrome.webdriver.WebDriver (session=&quot;33bf8cbebacfdd6d5acfc058c6563406&quot;)&gt;, &lt;Common.getlogging.GetLogging object at 0x000001AE56006040&gt;]<br/>init_index = &lt;PageObjects.index_page.IndexPage object at 0x000001AE5607DAC0&gt;, init_invest = &lt;PageObjects.invest_page.InvestPage object at 0x000001AE5607D8E0&gt;<br/>init_account = &lt;PageObjects.account_page.AccountPage object at 0x000001AE5607D910&gt;, test_data = {&#x27;invest_ammount&#x27;: 1000, &#x27;msg&#x27;: &#x27;投标成功！&#x27;}<br/><br/>    @pytest.mark.parametrize(&#x27;test_data&#x27;,invest_datas.invest_success)<br/>    @pytest.mark.usefixtures(&#x27;init_funcs&#x27;)<br/>    @pytest.mark.run(order=6)<br/>    def test_invest(self,init_module,init_index,init_invest,init_account,test_data):<br/>        &#x27;&#x27;&#x27;<br/>        投标成功:<br/>        前提:登录成功<br/>        1.选择可投资得标的，点击[抢投]按钮<br/>        2.输入投资金额<br/>        3.点击[投标]按钮<br/>        4.点击[查看并激活按钮]<br/>        &#x27;&#x27;&#x27;<br/>        # init_index.invest_is_available().click()<br/>        account_balance_before = init_invest.get_account_balance()<br/>        init_invest.input_invest_ammount(test_data[&#x27;invest_ammount&#x27;])<br/>        init_invest.click_invest_btn()<br/>        text = init_invest.get_invest_success()<br/>        time.sleep(2)<br/>        init_invest.click_invest_activate()<br/>        try:<br/>            assert float(init_account.get_available_balance()) == (float(account_balance_before)-test_data[&#x27;invest_ammount&#x27;]) and text ==test_data[&#x27;msg&#x27;]<br/>            # init_invest.getlog.get_logging(&#x27;INFO&#x27;,&#x27;Test Pass!&#x27;)<br/>            init_module[1].get_logging(&#x27;INFO&#x27;,&#x27;Test Pass!&#x27;)<br/>        except Exception as e:<br/>            # init_invest.getlog.get_logging(&#x27;ERROR&#x27;,&#x27;Test Fail！msg:{}&#x27;.format(e))<br/>            init_module[1].get_logging(&#x27;ERROR&#x27;,&#x27;Test Fail!,msg:{}&#x27;.format(e))<br/>&gt;           raise e<br/><br/>TestCases\test_invest.py:83: <br/>_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ <br/>TestCases\test_invest.py:77: in test_invest<br/>    assert float(init_account.get_available_balance()) == (float(account_balance_before)-test_data[&#x27;invest_ammount&#x27;]) and text ==test_data[&#x27;msg&#x27;]<br/>PageObjects\account_page.py:16: in get_available_balance<br/>    balance = self.get_text(loc.available_balance).replace(&#x27;元&#x27;,&#x27;&#x27;)<br/>_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ <br/><br/>self = &lt;PageObjects.account_page.AccountPage object at 0x000001AE5607D910&gt;, loc = (&#x27;xpath&#x27;, &quot;//div[@class=&#x27;per_info_ct_left&#x27;]//li[@class=&#x27;color_sub&#x27;]&quot;)<br/><br/>    def get_text(self,loc):<br/>&gt;       self.getlog.get_logging(&#x27;INFO&#x27;,&#x27;获取文本内容&#x27;)<br/><span class="error">E       AttributeError: &#x27;NoneType&#x27; object has no attribute &#x27;get_logging&#x27;</span><br/><br/>Common\BasePages.py:85: AttributeError<br/> -------------------------------Captured log call-------------------------------- <br/>[32mINFO    [0m root:getlogging.py:34 获取element属性值
+[32mINFO    [0m root:getlogging.py:34 投标功能：账户剩余金额,查找元素(&#x27;xpath&#x27;, &quot;//input[contains(@class,&#x27;invest-unit-investinput&#x27;)]&quot;)
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//input[contains(@class,&#x27;invest-unit-investinput&#x27;)]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.7418704493704094-1/displayed {&quot;id&quot;: &quot;0.7418704493704094-1&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.7418704493704094-1/displayed HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 投标功能：账户剩余金额:元素(&#x27;xpath&#x27;, &quot;//input[contains(@class,&#x27;invest-unit-investinput&#x27;)]&quot;)已出现，等待时长0.0328826904296875s
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//input[contains(@class,&#x27;invest-unit-investinput&#x27;)]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.7418704493704094-1/attribute/data-amount {&quot;name&quot;: &quot;data-amount&quot;, &quot;id&quot;: &quot;0.7418704493704094-1&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.7418704493704094-1/attribute/data-amount HTTP/1.1&quot; 200 80
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 投标功能：账户剩余金额成功获取到(&#x27;xpath&#x27;, &quot;//input[contains(@class,&#x27;invest-unit-investinput&#x27;)]&quot;)的data-amount属性值为1237030.46
+[32mINFO    [0m root:getlogging.py:34 投标功能:输入投标金额:输入文本内容1000
+[32mINFO    [0m root:getlogging.py:34 投标功能:输入投标金额,查找元素(&#x27;xpath&#x27;, &quot;//input[contains(@class,&#x27;invest-unit-investinput&#x27;)]&quot;)
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//input[contains(@class,&#x27;invest-unit-investinput&#x27;)]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.7418704493704094-1/displayed {&quot;id&quot;: &quot;0.7418704493704094-1&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.7418704493704094-1/displayed HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 投标功能:输入投标金额:元素(&#x27;xpath&#x27;, &quot;//input[contains(@class,&#x27;invest-unit-investinput&#x27;)]&quot;)已出现，等待时长0.01795220375061035s
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//input[contains(@class,&#x27;invest-unit-investinput&#x27;)]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.7418704493704094-1/value {&quot;text&quot;: &quot;1000&quot;, &quot;value&quot;: [&quot;1&quot;, &quot;0&quot;, &quot;0&quot;, &quot;0&quot;], &quot;id&quot;: &quot;0.7418704493704094-1&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.7418704493704094-1/value HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 投标功能:输入投标金额：在元素(&#x27;xpath&#x27;, &quot;//input[contains(@class,&#x27;invest-unit-investinput&#x27;)]&quot;)输入1000
+[32mINFO    [0m root:getlogging.py:34 投标功能:点击投标,查找元素(&#x27;xpath&#x27;, &quot;//button[contains(@class,&#x27;btn-special&#x27;)]&quot;)
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//button[contains(@class,&#x27;btn-special&#x27;)]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.7418704493704094-2/displayed {&quot;id&quot;: &quot;0.7418704493704094-2&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.7418704493704094-2/displayed HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 投标功能:点击投标:元素(&#x27;xpath&#x27;, &quot;//button[contains(@class,&#x27;btn-special&#x27;)]&quot;)已出现，等待时长0.024933338165283203s
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//button[contains(@class,&#x27;btn-special&#x27;)]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.7418704493704094-2/click {&quot;id&quot;: &quot;0.7418704493704094-2&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.7418704493704094-2/click HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 投标功能:点击投标：点击(&#x27;xpath&#x27;, &quot;//button[contains(@class,&#x27;btn-special&#x27;)]&quot;)按键
+[32mINFO    [0m root:getlogging.py:34 获取文本内容
+[32mINFO    [0m root:getlogging.py:34 投标功能：投标成功,查找元素(&#x27;xpath&#x27;, &quot;//div[@class=&#x27;layui-layer-content&#x27;]//div[text()=&#x27;投标成功！&#x27;]&quot;)
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//div[@class=&#x27;layui-layer-content&#x27;]//div[text()=&#x27;\u6295\u6807\u6210\u529f\uff01&#x27;]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 394
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//div[@class=&#x27;layui-layer-content&#x27;]//div[text()=&#x27;\u6295\u6807\u6210\u529f\uff01&#x27;]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.7418704493704094-3/displayed {&quot;id&quot;: &quot;0.7418704493704094-3&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.7418704493704094-3/displayed HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 投标功能：投标成功:元素(&#x27;xpath&#x27;, &quot;//div[@class=&#x27;layui-layer-content&#x27;]//div[text()=&#x27;投标成功！&#x27;]&quot;)已出现，等待时长0.5645599365234375s
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//div[@class=&#x27;layui-layer-content&#x27;]//div[text()=&#x27;\u6295\u6807\u6210\u529f\uff01&#x27;]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.7418704493704094-3/text {&quot;id&quot;: &quot;0.7418704493704094-3&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.7418704493704094-3/text HTTP/1.1&quot; 200 85
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 投标功能：查看并激活按钮,查找元素(&#x27;xpath&#x27;, &quot;//div[@class=&#x27;layui-layer-content&#x27;]//button[text()=&#x27;查看并激活&#x27;]&quot;)
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//div[@class=&#x27;layui-layer-content&#x27;]//button[text()=&#x27;\u67e5\u770b\u5e76\u6fc0\u6d3b&#x27;]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.7418704493704094-4/displayed {&quot;id&quot;: &quot;0.7418704493704094-4&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.7418704493704094-4/displayed HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 投标功能：查看并激活按钮:元素(&#x27;xpath&#x27;, &quot;//div[@class=&#x27;layui-layer-content&#x27;]//button[text()=&#x27;查看并激活&#x27;]&quot;)已出现，等待时长0.0657954216003418s
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//div[@class=&#x27;layui-layer-content&#x27;]//button[text()=&#x27;\u67e5\u770b\u5e76\u6fc0\u6d3b&#x27;]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.7418704493704094-4/click {&quot;id&quot;: &quot;0.7418704493704094-4&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.7418704493704094-4/click HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 投标功能：查看并激活按钮：点击(&#x27;xpath&#x27;, &quot;//div[@class=&#x27;layui-layer-content&#x27;]//button[text()=&#x27;查看并激活&#x27;]&quot;)按键
+[1m[31mERROR   [0m root:getlogging.py:38 Test Fail!,msg:&#x27;NoneType&#x27; object has no attribute &#x27;get_logging&#x27;<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">TestCases/test_login_new.py::TestLogin::test_login_1_fail_null[testdata0]</td>
+          <td class="col-duration">0.38</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> -------------------------------Captured log setup------------------------------- <br/>[32mINFO    [0m root:getlogging.py:34 测试开始！<br/> -------------------------------Captured log call-------------------------------- <br/>[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能:输入文本内容
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能,查找元素(&#x27;xpath&#x27;, &quot;//input[@name=&#x27;phone&#x27;]&quot;)
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//input[@name=&#x27;phone&#x27;]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.8125556051375291-1/displayed {&quot;id&quot;: &quot;0.8125556051375291-1&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.8125556051375291-1/displayed HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能:元素(&#x27;xpath&#x27;, &quot;//input[@name=&#x27;phone&#x27;]&quot;)已出现，等待时长0.022939682006835938s
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//input[@name=&#x27;phone&#x27;]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.8125556051375291-1/value {&quot;text&quot;: &quot;&quot;, &quot;value&quot;: [], &quot;id&quot;: &quot;0.8125556051375291-1&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.8125556051375291-1/value HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能：在元素(&#x27;xpath&#x27;, &quot;//input[@name=&#x27;phone&#x27;]&quot;)输入
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能:输入文本内容python
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能,查找元素(&#x27;xpath&#x27;, &quot;//input[@name=&#x27;password&#x27;]&quot;)
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//input[@name=&#x27;password&#x27;]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.8125556051375291-2/displayed {&quot;id&quot;: &quot;0.8125556051375291-2&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.8125556051375291-2/displayed HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能:元素(&#x27;xpath&#x27;, &quot;//input[@name=&#x27;password&#x27;]&quot;)已出现，等待时长0.03191494941711426s
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//input[@name=&#x27;password&#x27;]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.8125556051375291-2/value {&quot;text&quot;: &quot;python&quot;, &quot;value&quot;: [&quot;p&quot;, &quot;y&quot;, &quot;t&quot;, &quot;h&quot;, &quot;o&quot;, &quot;n&quot;], &quot;id&quot;: &quot;0.8125556051375291-2&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.8125556051375291-2/value HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能：在元素(&#x27;xpath&#x27;, &quot;//input[@name=&#x27;password&#x27;]&quot;)输入python
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能,查找元素(&#x27;class name&#x27;, &#x27;btn-special&#x27;)
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;class name&quot;, &quot;value&quot;: &quot;btn-special&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.8125556051375291-3/displayed {&quot;id&quot;: &quot;0.8125556051375291-3&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.8125556051375291-3/displayed HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能:元素(&#x27;class name&#x27;, &#x27;btn-special&#x27;)已出现，等待时长0.028922557830810547s
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;class name&quot;, &quot;value&quot;: &quot;btn-special&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.8125556051375291-3/click {&quot;id&quot;: &quot;0.8125556051375291-3&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.8125556051375291-3/click HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能：点击(&#x27;class name&#x27;, &#x27;btn-special&#x27;)按键
+[32mINFO    [0m root:getlogging.py:34 获取文本内容
+[32mINFO    [0m root:getlogging.py:34 登录页面-登陆区域错误信息,查找元素(&#x27;class name&#x27;, &#x27;form-error-info&#x27;)
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;class name&quot;, &quot;value&quot;: &quot;form-error-info&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.8125556051375291-4/displayed {&quot;id&quot;: &quot;0.8125556051375291-4&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.8125556051375291-4/displayed HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 登录页面-登陆区域错误信息:元素(&#x27;class name&#x27;, &#x27;form-error-info&#x27;)已出现，等待时长0.03191494941711426s
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;class name&quot;, &quot;value&quot;: &quot;form-error-info&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.8125556051375291-4/text {&quot;id&quot;: &quot;0.8125556051375291-4&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.8125556051375291-4/text HTTP/1.1&quot; 200 88
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 Test Pass!<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">TestCases/test_login_new.py::TestLogin::test_login_1_fail_null[testdata1]</td>
+          <td class="col-duration">0.50</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> -------------------------------Captured log call-------------------------------- <br/>[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能:输入文本内容18684720553
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能,查找元素(&#x27;xpath&#x27;, &quot;//input[@name=&#x27;phone&#x27;]&quot;)
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//input[@name=&#x27;phone&#x27;]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.9303261539834813-1/displayed {&quot;id&quot;: &quot;0.9303261539834813-1&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.9303261539834813-1/displayed HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能:元素(&#x27;xpath&#x27;, &quot;//input[@name=&#x27;phone&#x27;]&quot;)已出现，等待时长0.016955137252807617s
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//input[@name=&#x27;phone&#x27;]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.9303261539834813-1/value {&quot;text&quot;: &quot;18684720553&quot;, &quot;value&quot;: [&quot;1&quot;, &quot;8&quot;, &quot;6&quot;, &quot;8&quot;, &quot;4&quot;, &quot;7&quot;, &quot;2&quot;, &quot;0&quot;, &quot;5&quot;, &quot;5&quot;, &quot;3&quot;], &quot;id&quot;: &quot;0.9303261539834813-1&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.9303261539834813-1/value HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能：在元素(&#x27;xpath&#x27;, &quot;//input[@name=&#x27;phone&#x27;]&quot;)输入18684720553
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能:输入文本内容
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能,查找元素(&#x27;xpath&#x27;, &quot;//input[@name=&#x27;password&#x27;]&quot;)
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//input[@name=&#x27;password&#x27;]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.9303261539834813-2/displayed {&quot;id&quot;: &quot;0.9303261539834813-2&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.9303261539834813-2/displayed HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能:元素(&#x27;xpath&#x27;, &quot;//input[@name=&#x27;password&#x27;]&quot;)已出现，等待时长0.02892303466796875s
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//input[@name=&#x27;password&#x27;]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.9303261539834813-2/value {&quot;text&quot;: &quot;&quot;, &quot;value&quot;: [], &quot;id&quot;: &quot;0.9303261539834813-2&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.9303261539834813-2/value HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能：在元素(&#x27;xpath&#x27;, &quot;//input[@name=&#x27;password&#x27;]&quot;)输入
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能,查找元素(&#x27;class name&#x27;, &#x27;btn-special&#x27;)
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;class name&quot;, &quot;value&quot;: &quot;btn-special&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.9303261539834813-3/displayed {&quot;id&quot;: &quot;0.9303261539834813-3&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.9303261539834813-3/displayed HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能:元素(&#x27;class name&#x27;, &#x27;btn-special&#x27;)已出现，等待时长0.018949031829833984s
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;class name&quot;, &quot;value&quot;: &quot;btn-special&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.9303261539834813-3/click {&quot;id&quot;: &quot;0.9303261539834813-3&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.9303261539834813-3/click HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能：点击(&#x27;class name&#x27;, &#x27;btn-special&#x27;)按键
+[32mINFO    [0m root:getlogging.py:34 获取文本内容
+[32mINFO    [0m root:getlogging.py:34 登录页面-登陆区域错误信息,查找元素(&#x27;class name&#x27;, &#x27;form-error-info&#x27;)
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;class name&quot;, &quot;value&quot;: &quot;form-error-info&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.9303261539834813-4/displayed {&quot;id&quot;: &quot;0.9303261539834813-4&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.9303261539834813-4/displayed HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 登录页面-登陆区域错误信息:元素(&#x27;class name&#x27;, &#x27;form-error-info&#x27;)已出现，等待时长0.07180666923522949s
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;class name&quot;, &quot;value&quot;: &quot;form-error-info&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.9303261539834813-4/text {&quot;id&quot;: &quot;0.9303261539834813-4&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.9303261539834813-4/text HTTP/1.1&quot; 200 85
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 Test Pass!<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">TestCases/test_login_new.py::TestLogin::test_login_1_fail_null[testdata2]</td>
+          <td class="col-duration">0.34</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> -------------------------------Captured log call-------------------------------- <br/>[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能:输入文本内容
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能,查找元素(&#x27;xpath&#x27;, &quot;//input[@name=&#x27;phone&#x27;]&quot;)
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//input[@name=&#x27;phone&#x27;]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.4235944435576229-1/displayed {&quot;id&quot;: &quot;0.4235944435576229-1&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.4235944435576229-1/displayed HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能:元素(&#x27;xpath&#x27;, &quot;//input[@name=&#x27;phone&#x27;]&quot;)已出现，等待时长0.015956878662109375s
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//input[@name=&#x27;phone&#x27;]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.4235944435576229-1/value {&quot;text&quot;: &quot;&quot;, &quot;value&quot;: [], &quot;id&quot;: &quot;0.4235944435576229-1&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.4235944435576229-1/value HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能：在元素(&#x27;xpath&#x27;, &quot;//input[@name=&#x27;phone&#x27;]&quot;)输入
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能:输入文本内容
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能,查找元素(&#x27;xpath&#x27;, &quot;//input[@name=&#x27;password&#x27;]&quot;)
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//input[@name=&#x27;password&#x27;]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.4235944435576229-2/displayed {&quot;id&quot;: &quot;0.4235944435576229-2&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.4235944435576229-2/displayed HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能:元素(&#x27;xpath&#x27;, &quot;//input[@name=&#x27;password&#x27;]&quot;)已出现，等待时长0.03889656066894531s
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//input[@name=&#x27;password&#x27;]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.4235944435576229-2/value {&quot;text&quot;: &quot;&quot;, &quot;value&quot;: [], &quot;id&quot;: &quot;0.4235944435576229-2&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.4235944435576229-2/value HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能：在元素(&#x27;xpath&#x27;, &quot;//input[@name=&#x27;password&#x27;]&quot;)输入
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能,查找元素(&#x27;class name&#x27;, &#x27;btn-special&#x27;)
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;class name&quot;, &quot;value&quot;: &quot;btn-special&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.4235944435576229-3/displayed {&quot;id&quot;: &quot;0.4235944435576229-3&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.4235944435576229-3/displayed HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能:元素(&#x27;class name&#x27;, &#x27;btn-special&#x27;)已出现，等待时长0.022940635681152344s
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;class name&quot;, &quot;value&quot;: &quot;btn-special&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.4235944435576229-3/click {&quot;id&quot;: &quot;0.4235944435576229-3&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.4235944435576229-3/click HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能：点击(&#x27;class name&#x27;, &#x27;btn-special&#x27;)按键
+[32mINFO    [0m root:getlogging.py:34 获取文本内容
+[32mINFO    [0m root:getlogging.py:34 登录页面-登陆区域错误信息,查找元素(&#x27;class name&#x27;, &#x27;form-error-info&#x27;)
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;class name&quot;, &quot;value&quot;: &quot;form-error-info&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.4235944435576229-4/displayed {&quot;id&quot;: &quot;0.4235944435576229-4&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.4235944435576229-4/displayed HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 登录页面-登陆区域错误信息:元素(&#x27;class name&#x27;, &#x27;form-error-info&#x27;)已出现，等待时长0.02393651008605957s
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;class name&quot;, &quot;value&quot;: &quot;form-error-info&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.4235944435576229-4/text {&quot;id&quot;: &quot;0.4235944435576229-4&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.4235944435576229-4/text HTTP/1.1&quot; 200 88
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 Test Pass!<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">TestCases/test_login_new.py::TestLogin::test_login_1_fail_null[testdata3]</td>
+          <td class="col-duration">0.38</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> -------------------------------Captured log call-------------------------------- <br/>[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能:输入文本内容186847
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能,查找元素(&#x27;xpath&#x27;, &quot;//input[@name=&#x27;phone&#x27;]&quot;)
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//input[@name=&#x27;phone&#x27;]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 104
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.030567489883606136-1/displayed {&quot;id&quot;: &quot;0.030567489883606136-1&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.030567489883606136-1/displayed HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能:元素(&#x27;xpath&#x27;, &quot;//input[@name=&#x27;phone&#x27;]&quot;)已出现，等待时长0.019959211349487305s
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//input[@name=&#x27;phone&#x27;]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 104
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.030567489883606136-1/value {&quot;text&quot;: &quot;186847&quot;, &quot;value&quot;: [&quot;1&quot;, &quot;8&quot;, &quot;6&quot;, &quot;8&quot;, &quot;4&quot;, &quot;7&quot;], &quot;id&quot;: &quot;0.030567489883606136-1&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.030567489883606136-1/value HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能：在元素(&#x27;xpath&#x27;, &quot;//input[@name=&#x27;phone&#x27;]&quot;)输入186847
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能:输入文本内容python
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能,查找元素(&#x27;xpath&#x27;, &quot;//input[@name=&#x27;password&#x27;]&quot;)
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//input[@name=&#x27;password&#x27;]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 104
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.030567489883606136-2/displayed {&quot;id&quot;: &quot;0.030567489883606136-2&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.030567489883606136-2/displayed HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能:元素(&#x27;xpath&#x27;, &quot;//input[@name=&#x27;password&#x27;]&quot;)已出现，等待时长0.02094435691833496s
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//input[@name=&#x27;password&#x27;]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 104
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.030567489883606136-2/value {&quot;text&quot;: &quot;python&quot;, &quot;value&quot;: [&quot;p&quot;, &quot;y&quot;, &quot;t&quot;, &quot;h&quot;, &quot;o&quot;, &quot;n&quot;], &quot;id&quot;: &quot;0.030567489883606136-2&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.030567489883606136-2/value HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能：在元素(&#x27;xpath&#x27;, &quot;//input[@name=&#x27;password&#x27;]&quot;)输入python
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能,查找元素(&#x27;class name&#x27;, &#x27;btn-special&#x27;)
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;class name&quot;, &quot;value&quot;: &quot;btn-special&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 104
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.030567489883606136-3/displayed {&quot;id&quot;: &quot;0.030567489883606136-3&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.030567489883606136-3/displayed HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能:元素(&#x27;class name&#x27;, &#x27;btn-special&#x27;)已出现，等待时长0.01795196533203125s
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;class name&quot;, &quot;value&quot;: &quot;btn-special&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 104
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.030567489883606136-3/click {&quot;id&quot;: &quot;0.030567489883606136-3&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.030567489883606136-3/click HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能：点击(&#x27;class name&#x27;, &#x27;btn-special&#x27;)按键
+[32mINFO    [0m root:getlogging.py:34 获取文本内容
+[32mINFO    [0m root:getlogging.py:34 登录页面-登陆区域错误信息,查找元素(&#x27;class name&#x27;, &#x27;form-error-info&#x27;)
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;class name&quot;, &quot;value&quot;: &quot;form-error-info&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 104
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.030567489883606136-4/displayed {&quot;id&quot;: &quot;0.030567489883606136-4&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.030567489883606136-4/displayed HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 登录页面-登陆区域错误信息:元素(&#x27;class name&#x27;, &#x27;form-error-info&#x27;)已出现，等待时长0.026925086975097656s
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;class name&quot;, &quot;value&quot;: &quot;form-error-info&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 104
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.030567489883606136-4/text {&quot;id&quot;: &quot;0.030567489883606136-4&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.030567489883606136-4/text HTTP/1.1&quot; 200 97
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 Test Pass!<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">TestCases/test_login_new.py::TestLogin::test_login_1_fail_null[testdata4]</td>
+          <td class="col-duration">0.43</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> -------------------------------Captured log call-------------------------------- <br/>[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能:输入文本内容186847205531
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能,查找元素(&#x27;xpath&#x27;, &quot;//input[@name=&#x27;phone&#x27;]&quot;)
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//input[@name=&#x27;phone&#x27;]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.5055968526354322-1/displayed {&quot;id&quot;: &quot;0.5055968526354322-1&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.5055968526354322-1/displayed HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能:元素(&#x27;xpath&#x27;, &quot;//input[@name=&#x27;phone&#x27;]&quot;)已出现，等待时长0.0219419002532959s
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//input[@name=&#x27;phone&#x27;]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.5055968526354322-1/value {&quot;text&quot;: &quot;186847205531&quot;, &quot;value&quot;: [&quot;1&quot;, &quot;8&quot;, &quot;6&quot;, &quot;8&quot;, &quot;4&quot;, &quot;7&quot;, &quot;2&quot;, &quot;0&quot;, &quot;5&quot;, &quot;5&quot;, &quot;3&quot;, &quot;1&quot;], &quot;id&quot;: &quot;0.5055968526354322-1&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.5055968526354322-1/value HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能：在元素(&#x27;xpath&#x27;, &quot;//input[@name=&#x27;phone&#x27;]&quot;)输入186847205531
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能:输入文本内容python
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能,查找元素(&#x27;xpath&#x27;, &quot;//input[@name=&#x27;password&#x27;]&quot;)
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//input[@name=&#x27;password&#x27;]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.5055968526354322-2/displayed {&quot;id&quot;: &quot;0.5055968526354322-2&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.5055968526354322-2/displayed HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能:元素(&#x27;xpath&#x27;, &quot;//input[@name=&#x27;password&#x27;]&quot;)已出现，等待时长0.015957355499267578s
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//input[@name=&#x27;password&#x27;]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.5055968526354322-2/value {&quot;text&quot;: &quot;python&quot;, &quot;value&quot;: [&quot;p&quot;, &quot;y&quot;, &quot;t&quot;, &quot;h&quot;, &quot;o&quot;, &quot;n&quot;], &quot;id&quot;: &quot;0.5055968526354322-2&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.5055968526354322-2/value HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能：在元素(&#x27;xpath&#x27;, &quot;//input[@name=&#x27;password&#x27;]&quot;)输入python
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能,查找元素(&#x27;class name&#x27;, &#x27;btn-special&#x27;)
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;class name&quot;, &quot;value&quot;: &quot;btn-special&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.5055968526354322-3/displayed {&quot;id&quot;: &quot;0.5055968526354322-3&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.5055968526354322-3/displayed HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能:元素(&#x27;class name&#x27;, &#x27;btn-special&#x27;)已出现，等待时长0.02293872833251953s
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;class name&quot;, &quot;value&quot;: &quot;btn-special&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.5055968526354322-3/click {&quot;id&quot;: &quot;0.5055968526354322-3&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.5055968526354322-3/click HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能：点击(&#x27;class name&#x27;, &#x27;btn-special&#x27;)按键
+[32mINFO    [0m root:getlogging.py:34 获取文本内容
+[32mINFO    [0m root:getlogging.py:34 登录页面-登陆区域错误信息,查找元素(&#x27;class name&#x27;, &#x27;form-error-info&#x27;)
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;class name&quot;, &quot;value&quot;: &quot;form-error-info&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.5055968526354322-4/displayed {&quot;id&quot;: &quot;0.5055968526354322-4&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.5055968526354322-4/displayed HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 登录页面-登陆区域错误信息:元素(&#x27;class name&#x27;, &#x27;form-error-info&#x27;)已出现，等待时长0.02892279624938965s
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;class name&quot;, &quot;value&quot;: &quot;form-error-info&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.5055968526354322-4/text {&quot;id&quot;: &quot;0.5055968526354322-4&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.5055968526354322-4/text HTTP/1.1&quot; 200 97
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 Test Pass!<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">TestCases/test_login_new.py::TestLogin::test_login_2_fail_wrong[testdata0]</td>
+          <td class="col-duration">0.86</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> -------------------------------Captured log call-------------------------------- <br/>[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能:输入文本内容17312783975
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能,查找元素(&#x27;xpath&#x27;, &quot;//input[@name=&#x27;phone&#x27;]&quot;)
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//input[@name=&#x27;phone&#x27;]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 105
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.0012645871109691065-1/displayed {&quot;id&quot;: &quot;0.0012645871109691065-1&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.0012645871109691065-1/displayed HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能:元素(&#x27;xpath&#x27;, &quot;//input[@name=&#x27;phone&#x27;]&quot;)已出现，等待时长0.019945621490478516s
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//input[@name=&#x27;phone&#x27;]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 105
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.0012645871109691065-1/value {&quot;text&quot;: &quot;17312783975&quot;, &quot;value&quot;: [&quot;1&quot;, &quot;7&quot;, &quot;3&quot;, &quot;1&quot;, &quot;2&quot;, &quot;7&quot;, &quot;8&quot;, &quot;3&quot;, &quot;9&quot;, &quot;7&quot;, &quot;5&quot;], &quot;id&quot;: &quot;0.0012645871109691065-1&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.0012645871109691065-1/value HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能：在元素(&#x27;xpath&#x27;, &quot;//input[@name=&#x27;phone&#x27;]&quot;)输入17312783975
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能:输入文本内容python
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能,查找元素(&#x27;xpath&#x27;, &quot;//input[@name=&#x27;password&#x27;]&quot;)
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//input[@name=&#x27;password&#x27;]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 105
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.0012645871109691065-2/displayed {&quot;id&quot;: &quot;0.0012645871109691065-2&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.0012645871109691065-2/displayed HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能:元素(&#x27;xpath&#x27;, &quot;//input[@name=&#x27;password&#x27;]&quot;)已出现，等待时长0.015957117080688477s
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//input[@name=&#x27;password&#x27;]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 105
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.0012645871109691065-2/value {&quot;text&quot;: &quot;python&quot;, &quot;value&quot;: [&quot;p&quot;, &quot;y&quot;, &quot;t&quot;, &quot;h&quot;, &quot;o&quot;, &quot;n&quot;], &quot;id&quot;: &quot;0.0012645871109691065-2&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.0012645871109691065-2/value HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能：在元素(&#x27;xpath&#x27;, &quot;//input[@name=&#x27;password&#x27;]&quot;)输入python
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能,查找元素(&#x27;class name&#x27;, &#x27;btn-special&#x27;)
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;class name&quot;, &quot;value&quot;: &quot;btn-special&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 105
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.0012645871109691065-3/displayed {&quot;id&quot;: &quot;0.0012645871109691065-3&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.0012645871109691065-3/displayed HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能:元素(&#x27;class name&#x27;, &#x27;btn-special&#x27;)已出现，等待时长0.024933576583862305s
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;class name&quot;, &quot;value&quot;: &quot;btn-special&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 105
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.0012645871109691065-3/click {&quot;id&quot;: &quot;0.0012645871109691065-3&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.0012645871109691065-3/click HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能：点击(&#x27;class name&#x27;, &#x27;btn-special&#x27;)按键
+[32mINFO    [0m root:getlogging.py:34 获取文本内容
+[32mINFO    [0m root:getlogging.py:34 登录页面-获取页面正中间错误信息,查找元素(&#x27;class name&#x27;, &#x27;layui-layer-content&#x27;)
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;class name&quot;, &quot;value&quot;: &quot;layui-layer-content&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 352
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;class name&quot;, &quot;value&quot;: &quot;layui-layer-content&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 105
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.0012645871109691065-4/displayed {&quot;id&quot;: &quot;0.0012645871109691065-4&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.0012645871109691065-4/displayed HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 登录页面-获取页面正中间错误信息:元素(&#x27;class name&#x27;, &#x27;layui-layer-content&#x27;)已出现，等待时长0.5295274257659912s
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;class name&quot;, &quot;value&quot;: &quot;layui-layer-content&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 105
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.0012645871109691065-4/text {&quot;id&quot;: &quot;0.0012645871109691065-4&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.0012645871109691065-4/text HTTP/1.1&quot; 200 119
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 Test Pass!<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">TestCases/test_login_new.py::TestLogin::test_login_2_fail_wrong[testdata1]</td>
+          <td class="col-duration">0.88</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> -------------------------------Captured log call-------------------------------- <br/>[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能:输入文本内容13760246701
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能,查找元素(&#x27;xpath&#x27;, &quot;//input[@name=&#x27;phone&#x27;]&quot;)
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//input[@name=&#x27;phone&#x27;]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.9174754512559684-1/displayed {&quot;id&quot;: &quot;0.9174754512559684-1&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.9174754512559684-1/displayed HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能:元素(&#x27;xpath&#x27;, &quot;//input[@name=&#x27;phone&#x27;]&quot;)已出现，等待时长0.018948793411254883s
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//input[@name=&#x27;phone&#x27;]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.9174754512559684-1/value {&quot;text&quot;: &quot;13760246701&quot;, &quot;value&quot;: [&quot;1&quot;, &quot;3&quot;, &quot;7&quot;, &quot;6&quot;, &quot;0&quot;, &quot;2&quot;, &quot;4&quot;, &quot;6&quot;, &quot;7&quot;, &quot;0&quot;, &quot;1&quot;], &quot;id&quot;: &quot;0.9174754512559684-1&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.9174754512559684-1/value HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能：在元素(&#x27;xpath&#x27;, &quot;//input[@name=&#x27;phone&#x27;]&quot;)输入13760246701
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能:输入文本内容pppp
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能,查找元素(&#x27;xpath&#x27;, &quot;//input[@name=&#x27;password&#x27;]&quot;)
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//input[@name=&#x27;password&#x27;]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.9174754512559684-2/displayed {&quot;id&quot;: &quot;0.9174754512559684-2&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.9174754512559684-2/displayed HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能:元素(&#x27;xpath&#x27;, &quot;//input[@name=&#x27;password&#x27;]&quot;)已出现，等待时长0.014957666397094727s
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//input[@name=&#x27;password&#x27;]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.9174754512559684-2/value {&quot;text&quot;: &quot;pppp&quot;, &quot;value&quot;: [&quot;p&quot;, &quot;p&quot;, &quot;p&quot;, &quot;p&quot;], &quot;id&quot;: &quot;0.9174754512559684-2&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.9174754512559684-2/value HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能：在元素(&#x27;xpath&#x27;, &quot;//input[@name=&#x27;password&#x27;]&quot;)输入pppp
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能,查找元素(&#x27;class name&#x27;, &#x27;btn-special&#x27;)
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;class name&quot;, &quot;value&quot;: &quot;btn-special&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.9174754512559684-3/displayed {&quot;id&quot;: &quot;0.9174754512559684-3&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.9174754512559684-3/displayed HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能:元素(&#x27;class name&#x27;, &#x27;btn-special&#x27;)已出现，等待时长0.019945859909057617s
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;class name&quot;, &quot;value&quot;: &quot;btn-special&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.9174754512559684-3/click {&quot;id&quot;: &quot;0.9174754512559684-3&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.9174754512559684-3/click HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能：点击(&#x27;class name&#x27;, &#x27;btn-special&#x27;)按键
+[32mINFO    [0m root:getlogging.py:34 获取文本内容
+[32mINFO    [0m root:getlogging.py:34 登录页面-获取页面正中间错误信息,查找元素(&#x27;class name&#x27;, &#x27;layui-layer-content&#x27;)
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;class name&quot;, &quot;value&quot;: &quot;layui-layer-content&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 352
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;class name&quot;, &quot;value&quot;: &quot;layui-layer-content&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.9174754512559684-4/displayed {&quot;id&quot;: &quot;0.9174754512559684-4&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.9174754512559684-4/displayed HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 登录页面-获取页面正中间错误信息:元素(&#x27;class name&#x27;, &#x27;layui-layer-content&#x27;)已出现，等待时长0.544353723526001s
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;class name&quot;, &quot;value&quot;: &quot;layui-layer-content&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.9174754512559684-4/text {&quot;id&quot;: &quot;0.9174754512559684-4&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.9174754512559684-4/text HTTP/1.1&quot; 200 92
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 Test Pass!<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">TestCases/test_login_new.py::TestLogin::test_login_3_success</td>
+          <td class="col-duration">23.98</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> -------------------------------Captured log call-------------------------------- <br/>[32mINFO    [0m root:getlogging.py:34 测试成功的用例！
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能:输入文本内容13760246701
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能,查找元素(&#x27;xpath&#x27;, &quot;//input[@name=&#x27;phone&#x27;]&quot;)
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//input[@name=&#x27;phone&#x27;]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.8073242469118922-1/displayed {&quot;id&quot;: &quot;0.8073242469118922-1&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.8073242469118922-1/displayed HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能:元素(&#x27;xpath&#x27;, &quot;//input[@name=&#x27;phone&#x27;]&quot;)已出现，等待时长0.01795339584350586s
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//input[@name=&#x27;phone&#x27;]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.8073242469118922-1/value {&quot;text&quot;: &quot;13760246701&quot;, &quot;value&quot;: [&quot;1&quot;, &quot;3&quot;, &quot;7&quot;, &quot;6&quot;, &quot;0&quot;, &quot;2&quot;, &quot;4&quot;, &quot;6&quot;, &quot;7&quot;, &quot;0&quot;, &quot;1&quot;], &quot;id&quot;: &quot;0.8073242469118922-1&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.8073242469118922-1/value HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能：在元素(&#x27;xpath&#x27;, &quot;//input[@name=&#x27;phone&#x27;]&quot;)输入13760246701
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能:输入文本内容python
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能,查找元素(&#x27;xpath&#x27;, &quot;//input[@name=&#x27;password&#x27;]&quot;)
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//input[@name=&#x27;password&#x27;]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.8073242469118922-2/displayed {&quot;id&quot;: &quot;0.8073242469118922-2&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.8073242469118922-2/displayed HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能:元素(&#x27;xpath&#x27;, &quot;//input[@name=&#x27;password&#x27;]&quot;)已出现，等待时长0.017952680587768555s
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//input[@name=&#x27;password&#x27;]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.8073242469118922-2/value {&quot;text&quot;: &quot;python&quot;, &quot;value&quot;: [&quot;p&quot;, &quot;y&quot;, &quot;t&quot;, &quot;h&quot;, &quot;o&quot;, &quot;n&quot;], &quot;id&quot;: &quot;0.8073242469118922-2&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.8073242469118922-2/value HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能：在元素(&#x27;xpath&#x27;, &quot;//input[@name=&#x27;password&#x27;]&quot;)输入python
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能,查找元素(&#x27;class name&#x27;, &#x27;btn-special&#x27;)
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;class name&quot;, &quot;value&quot;: &quot;btn-special&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.8073242469118922-3/displayed {&quot;id&quot;: &quot;0.8073242469118922-3&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.8073242469118922-3/displayed HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能:元素(&#x27;class name&#x27;, &#x27;btn-special&#x27;)已出现，等待时长0.01795220375061035s
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;class name&quot;, &quot;value&quot;: &quot;btn-special&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.8073242469118922-3/click {&quot;id&quot;: &quot;0.8073242469118922-3&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.8073242469118922-3/click HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 登录页面-登录功能：点击(&#x27;class name&#x27;, &#x27;btn-special&#x27;)按键
+[32mINFO    [0m root:getlogging.py:34 获取文本内容
+[32mINFO    [0m root:getlogging.py:34 投标功能-获取账号名称,查找元素(&#x27;xpath&#x27;, &quot;//a[@href = &#x27;/Member/index.html&#x27;]&quot;)
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//a[@href = &#x27;/Member/index.html&#x27;]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 361
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//a[@href = &#x27;/Member/index.html&#x27;]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.8991201967189149-1/displayed {&quot;id&quot;: &quot;0.8991201967189149-1&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.8991201967189149-1/displayed HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 投标功能-获取账号名称:元素(&#x27;xpath&#x27;, &quot;//a[@href = &#x27;/Member/index.html&#x27;]&quot;)已出现，等待时长23.653963565826416s
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//a[@href = &#x27;/Member/index.html&#x27;]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.8991201967189149-1/text {&quot;id&quot;: &quot;0.8991201967189149-1&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.8991201967189149-1/text HTTP/1.1&quot; 200 101
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 Test Pass!<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">TestCases/test_invest.py::TestInvest::test_invest_not_multiple_of_10[test_data0]</td>
+          <td class="col-duration">26.12</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> -------------------------------Captured log call-------------------------------- <br/>[32mINFO    [0m root:getlogging.py:34 投标功能-获取投标按钮,查找元素集合(&#x27;xpath&#x27;, &quot;//div[@class=&#x27;b-unit&#x27;]//a[@class =&#x27;btn btn-special&#x27;]&quot;)
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/elements {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//div[@class=&#x27;b-unit&#x27;]//a[@class =&#x27;btn btn-special&#x27;]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/elements HTTP/1.1&quot; 200 174
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.6996993427920188-1/displayed {&quot;id&quot;: &quot;0.6996993427920188-1&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.6996993427920188-1/displayed HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.6996993427920188-2/displayed {&quot;id&quot;: &quot;0.6996993427920188-2&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.6996993427920188-2/displayed HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.6996993427920188-3/displayed {&quot;id&quot;: &quot;0.6996993427920188-3&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.6996993427920188-3/displayed HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/elements {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//div[@class=&#x27;b-unit&#x27;]//a[@class =&#x27;btn btn-special&#x27;]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/elements HTTP/1.1&quot; 200 174
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.6996993427920188-1/enabled {&quot;id&quot;: &quot;0.6996993427920188-1&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.6996993427920188-1/enabled HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.6996993427920188-1/click {&quot;id&quot;: &quot;0.6996993427920188-1&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.6996993427920188-1/click HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 投标功能:输入投标金额:输入文本内容15
+[32mINFO    [0m root:getlogging.py:34 投标功能:输入投标金额,查找元素(&#x27;xpath&#x27;, &quot;//input[contains(@class,&#x27;invest-unit-investinput&#x27;)]&quot;)
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//input[contains(@class,&#x27;invest-unit-investinput&#x27;)]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 103
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.40559303158432236-1/displayed {&quot;id&quot;: &quot;0.40559303158432236-1&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.40559303158432236-1/displayed HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 投标功能:输入投标金额:元素(&#x27;xpath&#x27;, &quot;//input[contains(@class,&#x27;invest-unit-investinput&#x27;)]&quot;)已出现，等待时长0.03989291191101074s
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//input[contains(@class,&#x27;invest-unit-investinput&#x27;)]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 103
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.40559303158432236-1/value {&quot;text&quot;: &quot;15&quot;, &quot;value&quot;: [&quot;1&quot;, &quot;5&quot;], &quot;id&quot;: &quot;0.40559303158432236-1&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.40559303158432236-1/value HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 投标功能:输入投标金额：在元素(&#x27;xpath&#x27;, &quot;//input[contains(@class,&#x27;invest-unit-investinput&#x27;)]&quot;)输入15
+[32mINFO    [0m root:getlogging.py:34 获取文本内容
+[32mINFO    [0m root:getlogging.py:34 投标功能:点击投标,查找元素(&#x27;xpath&#x27;, &quot;//button[contains(@class,&#x27;btn-special&#x27;)]&quot;)
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//button[contains(@class,&#x27;btn-special&#x27;)]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 103
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.40559303158432236-2/displayed {&quot;id&quot;: &quot;0.40559303158432236-2&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.40559303158432236-2/displayed HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 投标功能:点击投标:元素(&#x27;xpath&#x27;, &quot;//button[contains(@class,&#x27;btn-special&#x27;)]&quot;)已出现，等待时长0.030915021896362305s
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//button[contains(@class,&#x27;btn-special&#x27;)]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 103
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.40559303158432236-2/text {&quot;id&quot;: &quot;0.40559303158432236-2&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.40559303158432236-2/text HTTP/1.1&quot; 200 93
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 Test Pass！<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">TestCases/test_invest.py::TestInvest::test_invest_fail[test_data0]</td>
+          <td class="col-duration">26.45</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> -------------------------------Captured log call-------------------------------- <br/>[32mINFO    [0m root:getlogging.py:34 投标功能:输入投标金额:输入文本内容0
+[32mINFO    [0m root:getlogging.py:34 投标功能:输入投标金额,查找元素(&#x27;xpath&#x27;, &quot;//input[contains(@class,&#x27;invest-unit-investinput&#x27;)]&quot;)
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//input[contains(@class,&#x27;invest-unit-investinput&#x27;)]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.7351938685772803-1/displayed {&quot;id&quot;: &quot;0.7351938685772803-1&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.7351938685772803-1/displayed HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 投标功能:输入投标金额:元素(&#x27;xpath&#x27;, &quot;//input[contains(@class,&#x27;invest-unit-investinput&#x27;)]&quot;)已出现，等待时长23.58717441558838s
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//input[contains(@class,&#x27;invest-unit-investinput&#x27;)]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.7351938685772803-1/value {&quot;text&quot;: &quot;0&quot;, &quot;value&quot;: [&quot;0&quot;], &quot;id&quot;: &quot;0.7351938685772803-1&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.7351938685772803-1/value HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 投标功能:输入投标金额：在元素(&#x27;xpath&#x27;, &quot;//input[contains(@class,&#x27;invest-unit-investinput&#x27;)]&quot;)输入0
+[32mINFO    [0m root:getlogging.py:34 投标功能:点击投标,查找元素(&#x27;xpath&#x27;, &quot;//button[contains(@class,&#x27;btn-special&#x27;)]&quot;)
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//button[contains(@class,&#x27;btn-special&#x27;)]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.7351938685772803-2/displayed {&quot;id&quot;: &quot;0.7351938685772803-2&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.7351938685772803-2/displayed HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 投标功能:点击投标:元素(&#x27;xpath&#x27;, &quot;//button[contains(@class,&#x27;btn-special&#x27;)]&quot;)已出现，等待时长0.03390860557556152s
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//button[contains(@class,&#x27;btn-special&#x27;)]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.7351938685772803-2/click {&quot;id&quot;: &quot;0.7351938685772803-2&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.7351938685772803-2/click HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 投标功能:点击投标：点击(&#x27;xpath&#x27;, &quot;//button[contains(@class,&#x27;btn-special&#x27;)]&quot;)按键
+[32mINFO    [0m root:getlogging.py:34 获取文本内容
+[32mINFO    [0m root:getlogging.py:34 投标功能：弹出框错误提示,查找元素(&#x27;xpath&#x27;, &quot;//div[contains(@class,&#x27;layui-layer-content&#x27;)]/div[@class=&#x27;text-center&#x27;]&quot;)
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//div[contains(@class,&#x27;layui-layer-content&#x27;)]/div[@class=&#x27;text-center&#x27;]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 399
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//div[contains(@class,&#x27;layui-layer-content&#x27;)]/div[@class=&#x27;text-center&#x27;]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.7351938685772803-3/displayed {&quot;id&quot;: &quot;0.7351938685772803-3&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.7351938685772803-3/displayed HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 投标功能：弹出框错误提示:元素(&#x27;xpath&#x27;, &quot;//div[contains(@class,&#x27;layui-layer-content&#x27;)]/div[@class=&#x27;text-center&#x27;]&quot;)已出现，等待时长0.546088695526123s
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//div[contains(@class,&#x27;layui-layer-content&#x27;)]/div[@class=&#x27;text-center&#x27;]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.7351938685772803-3/text {&quot;id&quot;: &quot;0.7351938685772803-3&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.7351938685772803-3/text HTTP/1.1&quot; 200 97
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 Test Pass!
+[32mINFO    [0m root:getlogging.py:34 投标功能:确认弹出框错误提示,查找元素(&#x27;xpath&#x27;, &quot;//div[@id=&#x27;layui-layer1&#x27;]//a[text()=&#x27;确认&#x27;]&quot;)
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//div[@id=&#x27;layui-layer1&#x27;]//a[text()=&#x27;\u786e\u8ba4&#x27;]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.7351938685772803-4/displayed {&quot;id&quot;: &quot;0.7351938685772803-4&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.7351938685772803-4/displayed HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 投标功能:确认弹出框错误提示:元素(&#x27;xpath&#x27;, &quot;//div[@id=&#x27;layui-layer1&#x27;]//a[text()=&#x27;确认&#x27;]&quot;)已出现，等待时长0.054811716079711914s
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//div[@id=&#x27;layui-layer1&#x27;]//a[text()=&#x27;\u786e\u8ba4&#x27;]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.7351938685772803-4/click {&quot;id&quot;: &quot;0.7351938685772803-4&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.7351938685772803-4/click HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 投标功能:确认弹出框错误提示：点击(&#x27;xpath&#x27;, &quot;//div[@id=&#x27;layui-layer1&#x27;]//a[text()=&#x27;确认&#x27;]&quot;)按键<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">TestCases/test_invest.py::TestInvest::test_invest_fail[test_data1]</td>
+          <td class="col-duration">2.92</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> -------------------------------Captured log call-------------------------------- <br/>[32mINFO    [0m root:getlogging.py:34 投标功能:输入投标金额:输入文本内容110
+[32mINFO    [0m root:getlogging.py:34 投标功能:输入投标金额,查找元素(&#x27;xpath&#x27;, &quot;//input[contains(@class,&#x27;invest-unit-investinput&#x27;)]&quot;)
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//input[contains(@class,&#x27;invest-unit-investinput&#x27;)]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.5406896134703163-1/displayed {&quot;id&quot;: &quot;0.5406896134703163-1&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.5406896134703163-1/displayed HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 投标功能:输入投标金额:元素(&#x27;xpath&#x27;, &quot;//input[contains(@class,&#x27;invest-unit-investinput&#x27;)]&quot;)已出现，等待时长0.03789782524108887s
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//input[contains(@class,&#x27;invest-unit-investinput&#x27;)]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.5406896134703163-1/value {&quot;text&quot;: &quot;110&quot;, &quot;value&quot;: [&quot;1&quot;, &quot;1&quot;, &quot;0&quot;], &quot;id&quot;: &quot;0.5406896134703163-1&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.5406896134703163-1/value HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 投标功能:输入投标金额：在元素(&#x27;xpath&#x27;, &quot;//input[contains(@class,&#x27;invest-unit-investinput&#x27;)]&quot;)输入110
+[32mINFO    [0m root:getlogging.py:34 投标功能:点击投标,查找元素(&#x27;xpath&#x27;, &quot;//button[contains(@class,&#x27;btn-special&#x27;)]&quot;)
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//button[contains(@class,&#x27;btn-special&#x27;)]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.5406896134703163-2/displayed {&quot;id&quot;: &quot;0.5406896134703163-2&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.5406896134703163-2/displayed HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 投标功能:点击投标:元素(&#x27;xpath&#x27;, &quot;//button[contains(@class,&#x27;btn-special&#x27;)]&quot;)已出现，等待时长0.026937007904052734s
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//button[contains(@class,&#x27;btn-special&#x27;)]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.5406896134703163-2/click {&quot;id&quot;: &quot;0.5406896134703163-2&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.5406896134703163-2/click HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 投标功能:点击投标：点击(&#x27;xpath&#x27;, &quot;//button[contains(@class,&#x27;btn-special&#x27;)]&quot;)按键
+[32mINFO    [0m root:getlogging.py:34 获取文本内容
+[32mINFO    [0m root:getlogging.py:34 投标功能：弹出框错误提示,查找元素(&#x27;xpath&#x27;, &quot;//div[contains(@class,&#x27;layui-layer-content&#x27;)]/div[@class=&#x27;text-center&#x27;]&quot;)
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//div[contains(@class,&#x27;layui-layer-content&#x27;)]/div[@class=&#x27;text-center&#x27;]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 399
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//div[contains(@class,&#x27;layui-layer-content&#x27;)]/div[@class=&#x27;text-center&#x27;]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.5406896134703163-3/displayed {&quot;id&quot;: &quot;0.5406896134703163-3&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.5406896134703163-3/displayed HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 投标功能：弹出框错误提示:元素(&#x27;xpath&#x27;, &quot;//div[contains(@class,&#x27;layui-layer-content&#x27;)]/div[@class=&#x27;text-center&#x27;]&quot;)已出现，等待时长0.5587680339813232s
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//div[contains(@class,&#x27;layui-layer-content&#x27;)]/div[@class=&#x27;text-center&#x27;]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.5406896134703163-3/text {&quot;id&quot;: &quot;0.5406896134703163-3&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.5406896134703163-3/text HTTP/1.1&quot; 200 103
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 Test Pass!
+[32mINFO    [0m root:getlogging.py:34 投标功能:确认弹出框错误提示,查找元素(&#x27;xpath&#x27;, &quot;//div[@id=&#x27;layui-layer1&#x27;]//a[text()=&#x27;确认&#x27;]&quot;)
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//div[@id=&#x27;layui-layer1&#x27;]//a[text()=&#x27;\u786e\u8ba4&#x27;]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.5406896134703163-4/displayed {&quot;id&quot;: &quot;0.5406896134703163-4&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.5406896134703163-4/displayed HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 投标功能:确认弹出框错误提示:元素(&#x27;xpath&#x27;, &quot;//div[@id=&#x27;layui-layer1&#x27;]//a[text()=&#x27;确认&#x27;]&quot;)已出现，等待时长0.06382608413696289s
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//div[@id=&#x27;layui-layer1&#x27;]//a[text()=&#x27;\u786e\u8ba4&#x27;]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.5406896134703163-4/click {&quot;id&quot;: &quot;0.5406896134703163-4&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.5406896134703163-4/click HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 投标功能:确认弹出框错误提示：点击(&#x27;xpath&#x27;, &quot;//div[@id=&#x27;layui-layer1&#x27;]//a[text()=&#x27;确认&#x27;]&quot;)按键<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">TestCases/test_invest.py::TestInvest::test_invest_fail[test_data2]</td>
+          <td class="col-duration">2.90</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> -------------------------------Captured log call-------------------------------- <br/>[32mINFO    [0m root:getlogging.py:34 投标功能:输入投标金额:输入文本内容999999999999990
+[32mINFO    [0m root:getlogging.py:34 投标功能:输入投标金额,查找元素(&#x27;xpath&#x27;, &quot;//input[contains(@class,&#x27;invest-unit-investinput&#x27;)]&quot;)
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//input[contains(@class,&#x27;invest-unit-investinput&#x27;)]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.3486043448496321-1/displayed {&quot;id&quot;: &quot;0.3486043448496321-1&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.3486043448496321-1/displayed HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 投标功能:输入投标金额:元素(&#x27;xpath&#x27;, &quot;//input[contains(@class,&#x27;invest-unit-investinput&#x27;)]&quot;)已出现，等待时长0.028923749923706055s
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//input[contains(@class,&#x27;invest-unit-investinput&#x27;)]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.3486043448496321-1/value {&quot;text&quot;: &quot;999999999999990&quot;, &quot;value&quot;: [&quot;9&quot;, &quot;9&quot;, &quot;9&quot;, &quot;9&quot;, &quot;9&quot;, &quot;9&quot;, &quot;9&quot;, &quot;9&quot;, &quot;9&quot;, &quot;9&quot;, &quot;9&quot;, &quot;9&quot;, &quot;9&quot;, &quot;9&quot;, &quot;0&quot;], &quot;id&quot;: &quot;0.3486043448496321-1&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.3486043448496321-1/value HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 投标功能:输入投标金额：在元素(&#x27;xpath&#x27;, &quot;//input[contains(@class,&#x27;invest-unit-investinput&#x27;)]&quot;)输入999999999999990
+[32mINFO    [0m root:getlogging.py:34 投标功能:点击投标,查找元素(&#x27;xpath&#x27;, &quot;//button[contains(@class,&#x27;btn-special&#x27;)]&quot;)
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//button[contains(@class,&#x27;btn-special&#x27;)]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.3486043448496321-2/displayed {&quot;id&quot;: &quot;0.3486043448496321-2&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.3486043448496321-2/displayed HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 投标功能:点击投标:元素(&#x27;xpath&#x27;, &quot;//button[contains(@class,&#x27;btn-special&#x27;)]&quot;)已出现，等待时长0.022939682006835938s
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//button[contains(@class,&#x27;btn-special&#x27;)]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.3486043448496321-2/click {&quot;id&quot;: &quot;0.3486043448496321-2&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.3486043448496321-2/click HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 投标功能:点击投标：点击(&#x27;xpath&#x27;, &quot;//button[contains(@class,&#x27;btn-special&#x27;)]&quot;)按键
+[32mINFO    [0m root:getlogging.py:34 获取文本内容
+[32mINFO    [0m root:getlogging.py:34 投标功能：弹出框错误提示,查找元素(&#x27;xpath&#x27;, &quot;//div[contains(@class,&#x27;layui-layer-content&#x27;)]/div[@class=&#x27;text-center&#x27;]&quot;)
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//div[contains(@class,&#x27;layui-layer-content&#x27;)]/div[@class=&#x27;text-center&#x27;]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 399
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//div[contains(@class,&#x27;layui-layer-content&#x27;)]/div[@class=&#x27;text-center&#x27;]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.3486043448496321-3/displayed {&quot;id&quot;: &quot;0.3486043448496321-3&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.3486043448496321-3/displayed HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 投标功能：弹出框错误提示:元素(&#x27;xpath&#x27;, &quot;//div[contains(@class,&#x27;layui-layer-content&#x27;)]/div[@class=&#x27;text-center&#x27;]&quot;)已出现，等待时长0.5457673072814941s
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//div[contains(@class,&#x27;layui-layer-content&#x27;)]/div[@class=&#x27;text-center&#x27;]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.3486043448496321-3/text {&quot;id&quot;: &quot;0.3486043448496321-3&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.3486043448496321-3/text HTTP/1.1&quot; 200 100
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 Test Pass!
+[32mINFO    [0m root:getlogging.py:34 投标功能:确认弹出框错误提示,查找元素(&#x27;xpath&#x27;, &quot;//div[@id=&#x27;layui-layer1&#x27;]//a[text()=&#x27;确认&#x27;]&quot;)
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//div[@id=&#x27;layui-layer1&#x27;]//a[text()=&#x27;\u786e\u8ba4&#x27;]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 GET http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.3486043448496321-4/displayed {&quot;id&quot;: &quot;0.3486043448496321-4&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;GET /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.3486043448496321-4/displayed HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 投标功能:确认弹出框错误提示:元素(&#x27;xpath&#x27;, &quot;//div[@id=&#x27;layui-layer1&#x27;]//a[text()=&#x27;确认&#x27;]&quot;)已出现，等待时长0.022938013076782227s
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element {&quot;using&quot;: &quot;xpath&quot;, &quot;value&quot;: &quot;//div[@id=&#x27;layui-layer1&#x27;]//a[text()=&#x27;\u786e\u8ba4&#x27;]&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element HTTP/1.1&quot; 200 102
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:388 POST http://127.0.0.1:52872/session/33bf8cbebacfdd6d5acfc058c6563406/element/0.3486043448496321-4/click {&quot;id&quot;: &quot;0.3486043448496321-4&quot;, &quot;sessionId&quot;: &quot;33bf8cbebacfdd6d5acfc058c6563406&quot;}
+[35mDEBUG   [0m urllib3.connectionpool:connectionpool.py:428 http://127.0.0.1:52872 &quot;POST /session/33bf8cbebacfdd6d5acfc058c6563406/element/0.3486043448496321-4/click HTTP/1.1&quot; 200 72
+[35mDEBUG   [0m selenium.webdriver.remote.remote_connection:remote_connection.py:440 Finished Request
+[32mINFO    [0m root:getlogging.py:34 投标功能:确认弹出框错误提示：点击(&#x27;xpath&#x27;, &quot;//div[@id=&#x27;layui-layer1&#x27;]//a[text()=&#x27;确认&#x27;]&quot;)按键<br/></div></td></tr></tbody></table></body></html>
